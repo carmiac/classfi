@@ -1,0 +1,30 @@
+[package]
+name = "classfi"
+version = "0.1.0"
+description = "Classical music in your terminal."
+authors = ["Adam Milner <carmiac@gmail.com>"]
+license = "GPLv3"
+edition = "2024"
+
+[dependencies]
+crossterm = { version = "0.28.1", features = ["event-stream"] }
+futures = "0.3.31"
+ratatui = "0.30.0"
+tokio = { version = "1.40.0", features = ["full"] }
+color-eyre = "0.6.3"
+tca-ratatui = "0.6.0"
+url = "2.5.8"
+radiobrowser = "0.6.1"
+clap = { version = "4.6.0", features = ["derive", "cargo", "string"] }
+libmpv2 = "5.0.3"
+
+[build-dependencies]
+vergen-gix = { version = "9.1.0", features = ["build", "cargo"] }
+anyhow = "1.0.102"
+
+# Read the optimization guideline for more details: https://ratatui.rs/recipes/apps/release-your-app/#optimizations
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = "s"
+strip = true
