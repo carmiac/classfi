@@ -6,6 +6,7 @@ use crate::ui::UiStyles;
 
 use color_eyre::eyre::{OptionExt, eyre};
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
+use futures::FutureExt;
 use ratatui::DefaultTerminal;
 use tokio::sync::mpsc;
 
@@ -51,26 +52,35 @@ impl App {
 
     /// Run the application's main loop.
     pub async fn run(mut self, mut terminal: DefaultTerminal) -> color_eyre::Result<()> {
-        // Create the mvp player and start it.
+        // Get the station list, pick the configured station, statrt looking up its url.
         // TODO: Show ui during this with messages.
         // TODO: get_url timeout
         let stations = stations::Station::all();
         let mut station = stations[0].clone();
-        let url = station
-            .get_url()
-            .await
-            .ok_or_eyre("Couldn't get station URL.")?;
+        self.station = Some(station.clone());
+        let (url_tx, url_rx) = tokio::sync::oneshot::channel();
+        let mut url_rx = url_rx.fuse();
+        tokio::spawn(async move {
+            let _ = url_tx.send(station.get_url().await);
+        });
+
+        // Create the player and send it an initial config.
         let player = Player::new(
             self.state_tx.clone(),
             self.cmd_rx.take().ok_or_eyre("Couldn't get cmd_rx")?,
         );
+        let mut player_join_handle = tokio::spawn(player.run());
         self.cmd_tx.send(PlayerCommand::SetVolume(80))?;
-        self.cmd_tx.send(PlayerCommand::SetStation(url))?;
-        self.station = Some(station);
-        let mut join_handle = tokio::spawn(player.run());
+
+        // Main run loop
         while self.running {
             terminal.draw(|frame| frame.render_widget(&self, frame.area()))?;
             tokio::select! {
+                url_result = &mut url_rx => {
+                    if let Ok(Some(url)) = url_result {
+                        self.cmd_tx.send(PlayerCommand::SetStation(url))?;
+                    }
+                }
                 maybe_event = self.event_handler.next() => {
                     match maybe_event? {
                         Event::Tick => self.tick(),
@@ -87,7 +97,7 @@ impl App {
                         },
                     }
                  }
-                join = &mut join_handle => {
+                join = &mut player_join_handle => {
                     match join {
                         Ok(Ok(())) => return Ok(()), // player quit cleanly
                         Ok(Err(e)) => return Err(e), // player quit with an error

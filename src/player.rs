@@ -54,8 +54,6 @@ pub struct Player {
     cmd_rx: mpsc::UnboundedReceiver<PlayerCommand>,
     /// The mpv player
     mpv: Mpv,
-    /// Last time we got an event from the mpv.
-    last_mpv_time: Instant,
 }
 
 impl Player {
@@ -76,7 +74,6 @@ impl Player {
             state_tx,
             cmd_rx,
             mpv,
-            last_mpv_time: Instant::now(),
         }
     }
 
@@ -117,7 +114,7 @@ impl Player {
             self.state.connection_state = ConnectionState::Connecting;
         }
         // Process Commands and MPV updates.
-        let mut timeout_interval = tokio::time::interval(Duration::from_millis(1000));
+        let mut timeout_interval = tokio::time::interval(Duration::from_secs(10));
         let mut property_interval = tokio::time::interval(Duration::from_millis(1000 / 30));
         loop {
             tokio::select! {
@@ -127,6 +124,7 @@ impl Player {
                     },
                     _ = property_interval.tick() => {
                         self.process_mpv_events()?;
+                        // We got a good message, so reset the timeout.
                         timeout_interval.reset();
                         self.state_tx.send(self.state.clone())?;
                     },
@@ -141,11 +139,9 @@ impl Player {
 
     fn process_mpv_events(&mut self) -> Result<()> {
         while let Some(event) = self.mpv.wait_event(0.0) {
-            if event.is_ok() {
-                self.last_mpv_time = Instant::now();
-            }
             match event {
                 Err(err) => {
+                    error!("Event error {}", err);
                     return Err(mpv_err(err));
                 }
                 Ok(Event::PropertyChange {
@@ -193,7 +189,9 @@ impl Player {
                 }
 
                 // check for lost stream
-                _ => {} //println!("{:?}", event),
+                _ => {
+                    info!("Unhandled event: {:?}", event)
+                }
             }
         }
         Ok(())
@@ -201,6 +199,7 @@ impl Player {
 
     /// Process commands.
     fn handle_cmd(&mut self, cmd: PlayerCommand) -> Result<()> {
+        debug!("Player Command: {:?}", cmd);
         match cmd {
             PlayerCommand::SetStation(url) => {
                 self.mpv

@@ -1,3 +1,4 @@
+use futures::TryFutureExt;
 /// The Classical California Stations. Uses https://www.radio-browser.info to get the current streaming URL.
 use radiobrowser::RadioBrowserAPI;
 use url::Url;
@@ -52,19 +53,22 @@ pub struct Station {
 impl Station {
     /// Get the stream URL if available and cache it.
     pub async fn get_url(&mut self) -> Option<Url> {
-        if self.url.is_none()
-            && let Ok(api) = RadioBrowserAPI::new().await
-            && let Ok(stations) = api
-                .get_stations()
-                .name(self.name)
-                .name_exact(true)
-                .send()
-                .await
-            && let Some(s) = stations.into_iter().next()
-        {
-            self.url = Url::parse(s.url_resolved.as_str()).ok();
+        if self.url.is_none() {
+            info!("Getting URL for {}", self.name);
+            if let Ok(api) = RadioBrowserAPI::new().await.map_err(|e| e.to_string())
+                && let Ok(stations) = api
+                    .get_stations()
+                    .name(self.name)
+                    .name_exact(true)
+                    .send()
+                    .await
+                    .map_err(|e| e.to_string())
+                && let Some(s) = stations.into_iter().next()
+            {
+                info!("Got URL: {}", s.url_resolved);
+                self.url = Url::parse(s.url_resolved.as_str()).ok();
+            }
         }
-
         self.url.clone()
     }
 
