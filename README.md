@@ -4,7 +4,7 @@ Heavily inspired by [lowfi], but for classical music from Classical California s
 
 ## TODO
 
-- [ ] finish ratatui UI
+- [ ] add station select popup
 - [ ] verify station names for radio browser search
 - [ ] cache station URLs
 - [ ] better player state reporting/tracking

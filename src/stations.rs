@@ -1,4 +1,3 @@
-use futures::TryFutureExt;
 /// The Classical California Stations. Uses https://www.radio-browser.info to get the current streaming URL.
 use radiobrowser::RadioBrowserAPI;
 use url::Url;

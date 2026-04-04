@@ -19,6 +19,11 @@ async fn main() -> color_eyre::Result<()> {
     debug!("Loading config");
     let config = AppConfig::parse();
     debug!("Creating terminal");
+    let default_hook = std::panic::take_hook();
+    std::panic::set_hook(Box::new(move |info| {
+        ratatui::restore();
+        default_hook(info);
+    }));
     let terminal = ratatui::init();
     debug!("Starting app");
     let result = App::new(config).run(terminal).await;

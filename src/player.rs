@@ -4,8 +4,8 @@ use libmpv2::{
     Format, Mpv,
     events::{Event, PropertyData},
 };
-use std::time::{Duration, Instant};
 use tokio::sync::mpsc;
+use tokio::time::{Duration, Instant};
 use url::Url;
 
 // Map mpv errors to color_eyre errors to deal with threading issues.
@@ -36,8 +36,8 @@ pub enum ConnectionState {
 #[derive(Debug, Clone)]
 pub enum PlayerCommand {
     SetStation(Url),
-    Play,
-    Pause,
+    // Play,
+    // Pause,
     Toggle,
     SetVolume(i64),
     VolumeUp,
@@ -65,6 +65,8 @@ impl Player {
             init.set_property("video", "no")?;
             init.set_property("volume", 80i64)?;
             init.set_property("idle", "once")?;
+            init.set_property("terminal", "no")?;
+            init.set_property("input-terminal", "no")?;
             Ok(())
         })
         .expect("Could not create mpv. Is libmpv2 installed?");
@@ -114,7 +116,10 @@ impl Player {
             self.state.connection_state = ConnectionState::Connecting;
         }
         // Process Commands and MPV updates.
-        let mut timeout_interval = tokio::time::interval(Duration::from_secs(10));
+        let mut timeout_interval = tokio::time::interval_at(
+            Instant::now() + Duration::from_secs(10),
+            Duration::from_secs(10),
+        );
         let mut property_interval = tokio::time::interval(Duration::from_millis(1000 / 30));
         loop {
             tokio::select! {
@@ -208,13 +213,13 @@ impl Player {
                 self.state.station_url = Some(url);
             }
 
-            PlayerCommand::Play => {
-                return self.mpv.set_property("pause", false).map_err(mpv_err);
-            }
+            // PlayerCommand::Play => {
+            //     return self.mpv.set_property("pause", false).map_err(mpv_err);
+            // }
 
-            PlayerCommand::Pause => {
-                return self.mpv.set_property("pause", true).map_err(mpv_err);
-            }
+            // PlayerCommand::Pause => {
+            //     return self.mpv.set_property("pause", true).map_err(mpv_err);
+            // }
             PlayerCommand::Toggle => {
                 let connection = self.state.connection_state;
                 let pause = match connection {

@@ -1,9 +1,10 @@
 use ratatui::{
     buffer::Buffer,
-    layout::{Alignment, Rect},
+    layout::{Alignment, Constraint, Layout, Rect},
     style::Style,
+    symbols,
     text::{Line, Span},
-    widgets::{Block, BorderType, Paragraph, Widget},
+    widgets::{Block, BorderType, LineGauge, Paragraph, Widget},
 };
 use tca_ratatui::TcaTheme;
 
@@ -54,16 +55,12 @@ impl From<Option<String>> for UiStyles {
 
 impl Widget for &App {
     /// Renders the user interface widgets.
-    ///
-    // This is where you add new widgets.
-    // See the following resources:
-    // - https://docs.rs/ratatui/latest/ratatui/widgets/index.html
-    // - https://github.com/ratatui/ratatui/tree/master/examples
     fn render(self, area: Rect, buf: &mut Buffer) {
+        // Create the main frame (block) for the screen border.
         let title = Line::from("ClassFi")
             .centered()
             .style(self.styles.border.bold());
-        let controls = Line::from(" (p)lay (s)tream (+/-) volume (q)uit ")
+        let controls = Line::from(" (p)lay (s)tation (+/-) volume (q)uit ")
             .centered()
             .style(self.styles.border);
         let block = Block::bordered()
@@ -74,6 +71,7 @@ impl Widget for &App {
             .border_style(self.styles.border)
             .style(self.styles.primary);
 
+        // Create the lines that make up the main display info.
         let station = if let Some(station) = &self.station {
             Line::from(vec![
                 Span::styled(format!("{} : ", station.name), self.styles.info),
@@ -86,12 +84,48 @@ impl Widget for &App {
             Span::styled("Now Playing: ", self.styles.info),
             Span::styled(&self.player_state.title, self.styles.primary),
         ]);
-        // TODO: Player state Play duration
-        // TODO: volume
 
-        let text = vec![station, now_playing];
-        let paragraph = Paragraph::new(text).block(block).left_aligned();
+        let player_state = match self.player_state.connection_state {
+            crate::player::ConnectionState::Disconnected => {
+                Line::from("Disconnected").style(self.styles.error)
+            }
+            crate::player::ConnectionState::Connecting => {
+                Line::from("Connecting...").style(self.styles.info)
+            }
+            crate::player::ConnectionState::Buffering => {
+                Line::from(format!("Buffering... {}%", self.player_state.cache))
+                    .style(self.styles.warn)
+            }
+            crate::player::ConnectionState::Playing => {
+                let seconds = self.player_state.play_time as i64;
+                let hours = seconds / 3600;
+                let minutes = (seconds % 3600) / 60;
+                let remaining_seconds = seconds % 60;
+                Line::from(format!(
+                    "Play Time {:02}:{:02}:{:02}",
+                    hours, minutes, remaining_seconds
+                ))
+                .style(self.styles.info)
+            }
+            crate::player::ConnectionState::Paused => Line::from("Paused").style(self.styles.info),
+        };
 
-        paragraph.render(area, buf);
+        let text = vec![station, now_playing, player_state];
+        let paragraph = Paragraph::new(text).left_aligned();
+
+        // Create the volume gauge.
+        let volume = LineGauge::default()
+            .filled_style(self.styles.info)
+            .unfilled_style(self.styles.border)
+            .filled_symbol(symbols::line::THICK_HORIZONTAL)
+            .ratio(self.player_state.volume as f64 / 100.0)
+            .label(format!("Volume: {}%", self.player_state.volume));
+
+        // Render all the things.
+        let inner = block.inner(area);
+        block.render(area, buf);
+        let chunks = Layout::vertical([Constraint::Min(3), Constraint::Length(3)]).split(inner);
+        paragraph.render(chunks[0], buf);
+        volume.render(chunks[1], buf);
     }
 }
