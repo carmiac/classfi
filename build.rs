@@ -1,13 +1,11 @@
 use anyhow::Result;
-use vergen_gix::{BuildBuilder, CargoBuilder, Emitter, GixBuilder};
+use vergen_gix::{BuildBuilder, Emitter, GixBuilder};
 
 fn main() -> Result<()> {
-    let build = BuildBuilder::all_build()?;
-    let gix = GixBuilder::all_git()?;
-    let cargo = CargoBuilder::all_cargo()?;
+    let build = BuildBuilder::default().build_date(true).build()?;
+    let gix = GixBuilder::default().describe(true, true, None).build()?;
     Emitter::default()
         .add_instructions(&build)?
         .add_instructions(&gix)?
-        .add_instructions(&cargo)?
         .emit()
 }

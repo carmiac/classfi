@@ -10,7 +10,7 @@ struct StationDef {
 const STATION_DEFS: &[StationDef] = &[
     StationDef {
         name: "Classical KUSC",
-        description: "Classical California - 24/7 classical music",
+        description: "Classical California - 24/7 Classical Music",
     },
     StationDef {
         name: "KDFC Classical California Ultimate Playlist",

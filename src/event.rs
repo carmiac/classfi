@@ -3,6 +3,7 @@ use crossterm::event::Event as CrosstermEvent;
 use futures::{FutureExt, StreamExt};
 use std::time::Duration;
 use tokio::sync::mpsc;
+use url::Url;
 
 /// The frequency at which tick events are emitted.
 const TICK_FPS: f64 = 30.0;
@@ -33,13 +34,17 @@ pub enum Event {
 pub enum AppEvent {
     /// Quit the application.
     Quit,
+    /// Change to the currently selected station.
+    NewStationUrl(Url),
+    /// Station lookup failed.
+    StationUrlFailed,
 }
 
 /// Terminal event handler.
 #[derive(Debug)]
 pub struct EventHandler {
     /// Event sender channel.
-    sender: mpsc::UnboundedSender<Event>,
+    pub sender: mpsc::UnboundedSender<Event>,
     /// Event receiver channel.
     receiver: mpsc::UnboundedReceiver<Event>,
 }
@@ -73,7 +78,7 @@ impl EventHandler {
     ///
     /// This is useful for sending events to the event handler which will be processed by the next
     /// iteration of the application's event loop.
-    pub fn send(&mut self, app_event: AppEvent) {
+    pub fn send(&self, app_event: AppEvent) {
         // Ignore the result as the receiver cannot be dropped while this struct still has a
         // reference to it
         let _ = self.sender.send(Event::App(app_event));

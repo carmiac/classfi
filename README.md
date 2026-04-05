@@ -4,10 +4,13 @@ Heavily inspired by [lowfi], but for classical music from Classical California s
 
 ## TODO
 
-- [ ] add station select popup
-- [ ] verify station names for radio browser search
-- [ ] cache station URLs
+- [ ] add theme/highlighting in popup
+- [ ] Verify station names for radio browser search
+  - [ ] add separate search term from station name
+- [ ] cache station URLs to disk
 - [ ] better player state reporting/tracking
+  - [ ] test via flakey connection tools
+  - [ ] look at ignored messages from mpv
 - [ ] Write some documentation
 - [ ] add media key handling
 - [ ] add CLI flags

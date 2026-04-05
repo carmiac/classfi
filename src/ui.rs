@@ -1,14 +1,16 @@
+use std::cell::RefCell;
+
+use crate::{app::App, stations::Station};
+use crossterm::event::{KeyCode, KeyEvent};
 use ratatui::{
     buffer::Buffer,
     layout::{Alignment, Constraint, Layout, Rect},
     style::Style,
     symbols,
     text::{Line, Span},
-    widgets::{Block, BorderType, LineGauge, Paragraph, Widget},
+    widgets::{Block, BorderType, Clear, LineGauge, Paragraph, Row, Table, TableState, Widget},
 };
 use tca_ratatui::TcaTheme;
-
-use crate::app::App;
 
 #[derive(Debug, Clone)]
 pub(crate) struct UiStyles {
@@ -60,7 +62,7 @@ impl Widget for &App {
         let title = Line::from("ClassFi")
             .centered()
             .style(self.styles.border.bold());
-        let controls = Line::from(" (p)lay (s)tation (+/-) volume (q)uit ")
+        let controls = Line::from(" (p)lay/pause (s)tation (+/-) volume (q)uit ")
             .centered()
             .style(self.styles.border);
         let block = Block::bordered()
@@ -72,14 +74,15 @@ impl Widget for &App {
             .style(self.styles.primary);
 
         // Create the lines that make up the main display info.
-        let station = if let Some(station) = &self.station {
-            Line::from(vec![
-                Span::styled(format!("{} : ", station.name), self.styles.info),
-                Span::styled(station.description, self.styles.primary),
-            ])
-        } else {
-            Line::from("No Station Set").style(self.styles.warn)
-        };
+        let station = self.station.clone().unwrap_or(Station {
+            name: "No Station Selected",
+            description: "",
+            url: None,
+        });
+        let station = Line::from(vec![
+            Span::styled(format!("{} : ", station.name), self.styles.info),
+            Span::styled(station.description, self.styles.primary),
+        ]);
         let now_playing = Line::from(vec![
             Span::styled("Now Playing: ", self.styles.info),
             Span::styled(&self.player_state.title, self.styles.primary),
@@ -101,11 +104,14 @@ impl Widget for &App {
                 let hours = seconds / 3600;
                 let minutes = (seconds % 3600) / 60;
                 let remaining_seconds = seconds % 60;
-                Line::from(format!(
-                    "Play Time {:02}:{:02}:{:02}",
-                    hours, minutes, remaining_seconds
-                ))
-                .style(self.styles.info)
+
+                Line::from(vec![
+                    Span::styled("Play Time: ", self.styles.info),
+                    Span::styled(
+                        format!("{:02}:{:02}:{:02}", hours, minutes, remaining_seconds),
+                        self.styles.primary,
+                    ),
+                ])
             }
             crate::player::ConnectionState::Paused => Line::from("Paused").style(self.styles.info),
         };
@@ -124,8 +130,106 @@ impl Widget for &App {
         // Render all the things.
         let inner = block.inner(area);
         block.render(area, buf);
-        let chunks = Layout::vertical([Constraint::Min(3), Constraint::Length(3)]).split(inner);
+        let chunks = Layout::vertical([Constraint::Min(4), Constraint::Length(3)]).split(inner);
         paragraph.render(chunks[0], buf);
         volume.render(chunks[1], buf);
+        // Create the popup.
+        if self.show_station_selector {
+            let centered_area =
+                area.centered(Constraint::Percentage(65), Constraint::Percentage(65));
+            let clear = Clear::default();
+            clear.render(centered_area, buf);
+            self.station_selector.render(centered_area, buf);
+        }
+    }
+}
+
+pub struct StationSelector {
+    /// All the stations to choose from.
+    stations: Vec<Station>,
+    /// Widget state
+    table_state: RefCell<TableState>,
+}
+
+pub enum StationSelectorResult {
+    /// Not ours to handle
+    None,
+    /// User is scrolling
+    Scrolling,
+    /// User wants to close the selector
+    CloseSelector,
+    /// User selected a new station
+    NewStation(Station),
+}
+
+impl StationSelector {
+    pub fn default() -> Self {
+        let stations = Station::all();
+        StationSelector {
+            stations,
+            table_state: TableState::default().into(),
+        }
+    }
+
+    pub fn handle_key_events(&mut self, key_event: KeyEvent) -> StationSelectorResult {
+        match key_event.code {
+            // Keys that always work regardless of mode.
+            KeyCode::Esc => StationSelectorResult::CloseSelector,
+            KeyCode::Enter => {
+                let idx = self.table_state.borrow().selected().unwrap_or(0);
+                StationSelectorResult::NewStation(self.stations[idx].clone())
+            }
+            KeyCode::Up => {
+                self.table_state.borrow_mut().select_previous();
+                StationSelectorResult::Scrolling
+            }
+            KeyCode::Down => {
+                self.table_state.borrow_mut().select_next();
+                StationSelectorResult::Scrolling
+            }
+            _ => StationSelectorResult::None,
+        }
+    }
+
+    pub fn station(&self) -> Station {
+        let idx = self.table_state.borrow().selected().unwrap_or(0);
+        self.stations[idx].clone()
+    }
+}
+
+impl Widget for &StationSelector {
+    fn render(self, area: Rect, buf: &mut Buffer) {
+        // TODO: Get style
+        // Create the table
+        let mut rows = Vec::<Row>::new();
+        let mut name_width = 0;
+        let mut desc_width = 0;
+
+        for station in &self.stations {
+            name_width = name_width.max(station.name.len());
+            desc_width = desc_width.max(station.description.len());
+            let row = Row::new(vec![
+                station.name.to_string(),
+                station.description.to_string(),
+            ]);
+            rows.push(row);
+        }
+
+        let block = Block::bordered().title("Select a new station, Esc to cancel");
+        let widths = [
+            Constraint::Min(name_width as u16 + 2),
+            Constraint::Percentage(100),
+        ];
+        let table = Table::new(rows, widths)
+            .header(Row::new(vec!["Name", "Description"]))
+            .highlight_symbol(">>")
+            .block(block);
+
+        ratatui::widgets::StatefulWidget::render(
+            table,
+            area,
+            buf,
+            &mut self.table_state.borrow_mut(),
+        );
     }
 }
