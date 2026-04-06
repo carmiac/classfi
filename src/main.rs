@@ -24,9 +24,12 @@ async fn main() -> color_eyre::Result<()> {
         ratatui::restore();
         default_hook(info);
     }));
+    debug!("Creating app");
+    let app = App::new(config);
+    debug!("Starting ratatui");
     let terminal = ratatui::init();
-    debug!("Starting app");
-    let result = App::new(config).run(terminal).await;
+    debug!("Running app");
+    let result = app.run(terminal).await;
     ratatui::restore();
     result
 }

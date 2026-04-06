@@ -1,9 +1,13 @@
-# classfi - A simple classical music player
+# Classfi - A Simple Classical Music Player
 
-Heavily inspired by [lowfi], but for classical music from Classical California streams.
+Heavily inspired by [lowfi](https://github.com/talwat/lowfi), but for classical music from [Classical California](https://www.classicalcalifornia.org/) streams.
 
 ## TODO
 
+- [ ] fix blank screen hang on start
+- [ ] better option list for --station
+- [ ] debug level option
+- [ ] add tests
 - [ ] add theme/highlighting in popup
 - [ ] Verify station names for radio browser search
   - [ ] add separate search term from station name

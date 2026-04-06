@@ -1,6 +1,9 @@
 use std::cell::RefCell;
 
-use crate::{app::App, stations::Station};
+use crate::{
+    app::App,
+    stations::{Station, CLASSICAL_STATIONS},
+};
 use crossterm::event::{KeyCode, KeyEvent};
 use ratatui::{
     buffer::Buffer,
@@ -74,14 +77,9 @@ impl Widget for &App {
             .style(self.styles.primary);
 
         // Create the lines that make up the main display info.
-        let station = self.station.clone().unwrap_or(Station {
-            name: "No Station Selected",
-            description: "",
-            url: None,
-        });
         let station = Line::from(vec![
-            Span::styled(format!("{} : ", station.name), self.styles.info),
-            Span::styled(station.description, self.styles.primary),
+            Span::styled(format!("{} : ", self.station.name), self.styles.info),
+            Span::styled(self.station.description, self.styles.primary),
         ]);
         let now_playing = Line::from(vec![
             Span::styled("Now Playing: ", self.styles.info),
@@ -92,9 +90,9 @@ impl Widget for &App {
             crate::player::ConnectionState::Disconnected => {
                 Line::from("Disconnected").style(self.styles.error)
             }
-            crate::player::ConnectionState::Connecting => {
-                Line::from("Connecting...").style(self.styles.info)
-            }
+            // crate::player::ConnectionState::Connecting => {
+            //     Line::from("Connecting...").style(self.styles.info)
+            // }
             crate::player::ConnectionState::Buffering => {
                 Line::from(format!("Buffering... {}%", self.player_state.cache))
                     .style(self.styles.warn)
@@ -145,14 +143,12 @@ impl Widget for &App {
 }
 
 pub struct StationSelector {
-    /// All the stations to choose from.
-    stations: Vec<Station>,
     /// Widget state
     table_state: RefCell<TableState>,
 }
 
 pub enum StationSelectorResult {
-    /// Not ours to handle
+    /// Not our problem
     None,
     /// User is scrolling
     Scrolling,
@@ -163,21 +159,13 @@ pub enum StationSelectorResult {
 }
 
 impl StationSelector {
-    pub fn default() -> Self {
-        let stations = Station::all();
-        StationSelector {
-            stations,
-            table_state: TableState::default().into(),
-        }
-    }
-
     pub fn handle_key_events(&mut self, key_event: KeyEvent) -> StationSelectorResult {
         match key_event.code {
             // Keys that always work regardless of mode.
             KeyCode::Esc => StationSelectorResult::CloseSelector,
             KeyCode::Enter => {
                 let idx = self.table_state.borrow().selected().unwrap_or(0);
-                StationSelectorResult::NewStation(self.stations[idx].clone())
+                StationSelectorResult::NewStation(CLASSICAL_STATIONS[idx])
             }
             KeyCode::Up => {
                 self.table_state.borrow_mut().select_previous();
@@ -193,7 +181,20 @@ impl StationSelector {
 
     pub fn station(&self) -> Station {
         let idx = self.table_state.borrow().selected().unwrap_or(0);
-        self.stations[idx].clone()
+        debug!("station idx: {:?}", idx);
+        CLASSICAL_STATIONS[idx]
+    }
+
+    pub fn set_station_idx(&mut self, idx: usize) {
+        self.table_state = TableState::default().with_selected(idx).into();
+    }
+}
+
+impl Default for StationSelector {
+    fn default() -> Self {
+        StationSelector {
+            table_state: TableState::default().into(),
+        }
     }
 }
 
@@ -205,7 +206,7 @@ impl Widget for &StationSelector {
         let mut name_width = 0;
         let mut desc_width = 0;
 
-        for station in &self.stations {
+        for station in CLASSICAL_STATIONS {
             name_width = name_width.max(station.name.len());
             desc_width = desc_width.max(station.description.len());
             let row = Row::new(vec![

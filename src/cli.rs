@@ -17,7 +17,7 @@ pub fn dir_strategy() -> etcetera::app_strategy::Xdg {
 // Setup logging
 pub fn log_init() -> color_eyre::Result<()> {
     let directory = dir_strategy().data_dir();
-    std::fs::create_dir_all(directory.clone())?;
+    std::fs::create_dir_all(&directory)?;
     let log_path = directory.join(env!("CARGO_PKG_NAME"));
     let log_file = std::fs::File::create(log_path)?;
     let file_subscriber = fmt::layer()

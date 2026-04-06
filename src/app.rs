@@ -1,26 +1,31 @@
+use std::collections::HashMap;
+
 use crate::cli::AppConfig;
 use crate::event::{AppEvent, Event, EventHandler};
 use crate::player::{Player, PlayerCommand, PlayerState};
-use crate::stations::Station;
+use crate::stations::{CLASSICAL_STATIONS, Station};
 use crate::ui::{StationSelector, UiStyles};
 
 use color_eyre::eyre::{OptionExt, eyre};
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use futures::FutureExt;
+use radiobrowser::RadioBrowserAPI;
 use ratatui::DefaultTerminal;
 use tokio::sync::mpsc;
+use url::Url;
 
 /// Application.
 pub struct App {
     running: bool,
-    pub(crate) show_station_selector: bool,
-    pub(crate) station: Option<Station>,
     event_handler: EventHandler,
     state_tx: mpsc::UnboundedSender<PlayerState>,
     state_rx: mpsc::UnboundedReceiver<PlayerState>,
     cmd_tx: mpsc::UnboundedSender<PlayerCommand>,
     cmd_rx: Option<mpsc::UnboundedReceiver<PlayerCommand>>,
+    pub(crate) station: Station,
+    station_urls: HashMap<Station, Url>,
     pub(crate) station_selector: StationSelector,
+    pub(crate) show_station_selector: bool,
     pub(crate) styles: crate::ui::UiStyles,
     pub(crate) player_state: PlayerState,
 }
@@ -32,7 +37,7 @@ impl Default for App {
         Self {
             running: true,
             show_station_selector: false,
-            station: None,
+            station: CLASSICAL_STATIONS[0],
             event_handler: EventHandler::new(),
             state_tx,
             state_rx,
@@ -41,6 +46,7 @@ impl Default for App {
             station_selector: StationSelector::default(),
             styles: UiStyles::default(),
             player_state: PlayerState::default(),
+            station_urls: HashMap::new(),
         }
     }
 }
@@ -48,25 +54,50 @@ impl Default for App {
 impl App {
     /// Constructs a new instance of [`App`].
     pub fn new(config: AppConfig) -> Self {
+        let mut station_selector = StationSelector::default();
+        station_selector.set_station_idx(config.station);
         App {
             styles: UiStyles::from(config.theme),
+            station_selector,
             ..Default::default()
         }
     }
 
-    /// Get the url for the new station and change to it.
-    fn change_station(&mut self, station: Station) {
-        let mut s = station.clone();
-        self.station = Some(station);
+    /// Get the stream URL if available and cache it.
+    pub fn get_url(&self, station: Station) {
+        // Spawn a thread to et it from Radio Browser
+        info!("Getting URL for {}", station.name);
         let sender = self.event_handler.sender.clone();
         tokio::spawn(async move {
-            let rslt = s.get_url().await;
-            if let Some(url) = rslt {
-                _ = sender.send(Event::App(AppEvent::NewStationUrl(url)));
-            } else {
-                _ = sender.send(Event::App(AppEvent::StationUrlFailed));
+            if let Ok(api) = RadioBrowserAPI::new().await.map_err(|e| e.to_string())
+            && let Ok(stations) = api
+                .get_stations()
+                .name(station.name)
+                .name_exact(true)
+                .send()
+                .await
+                .map_err(|e| e.to_string())
+            && let Some(s) = stations.into_iter().next()
+            {
+                info!("Got URL: {} for station {:?}", s.url_resolved, station);
+                if let Ok(url) = Url::parse(s.url_resolved.as_str()) {
+                        _ = sender.send(Event::App(AppEvent::NewStationUrl(station, url)));
+                } else {
+                    _ = sender.send(Event::App(AppEvent::StationUrlFailed(station)));
+                }
             }
         });
+    }
+
+    /// Get the url for the new station and change to it.
+    fn change_station(&mut self, station: Station) {
+        self.station = station;
+        // Check that we have the url.
+        if let Some(url) = self.station_urls.get(&station){
+               _ = self.cmd_tx.send(PlayerCommand::SetStation(url.clone()));
+        } else {
+            self.get_url(station);
+        }
     }
 
     /// Run the application's main loop.
@@ -80,7 +111,6 @@ impl App {
         );
         let mut player_join_handle = tokio::spawn(player.run()).fuse();
         self.cmd_tx.send(PlayerCommand::SetVolume(80))?;
-
         // Main run loop
         while self.running {
             terminal.draw(|frame| frame.render_widget(&self, frame.area()))?;
@@ -98,8 +128,15 @@ impl App {
                         },
                         Event::App(app_event) => match app_event {
                             AppEvent::Quit=>self.quit(),
-                            AppEvent::NewStationUrl(url)=>{ _ = self.cmd_tx.send(PlayerCommand::SetStation(url));},
-                            AppEvent::StationUrlFailed => todo!(),
+                            AppEvent::NewStationUrl(station, url)=> {
+                                // Add to the url table
+                                self.station_urls.insert(station, url.clone());  
+                                // If for the current station, send the new url to the player
+                                if self.station == station{
+                                _ = self.cmd_tx.send(PlayerCommand::SetStation(url));
+                                }
+                            },
+                            AppEvent::StationUrlFailed(station) => {info!("Failed url lookup for {:?}", station);}
                         },
                     }
                  }

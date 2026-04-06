@@ -20,14 +20,13 @@ pub struct PlayerState {
     pub title: String,
     pub cache: i64,
     pub connection_state: ConnectionState,
-    station_url: Option<Url>,
 }
 
 #[derive(Debug, Default, Clone, Copy)]
 pub enum ConnectionState {
     #[default]
     Disconnected,
-    Connecting,
+    // Connecting,
     Buffering,
     Playing,
     Paused,
@@ -67,6 +66,7 @@ impl Player {
             init.set_property("idle", "once")?;
             init.set_property("terminal", "no")?;
             init.set_property("input-terminal", "no")?;
+            init.set_property("input-vo-keyboard", "no")?;
             Ok(())
         })
         .expect("Could not create mpv. Is libmpv2 installed?");
@@ -108,13 +108,6 @@ impl Player {
         // Setup mpv player.
         self.setup_mpv()?;
 
-        // Start player is station is set.
-        if let Some(ref url) = self.state.station_url {
-            self.mpv
-                .command("loadfile", &[url.as_str(), "replace"])
-                .map_err(mpv_err)?;
-            self.state.connection_state = ConnectionState::Connecting;
-        }
         // Process Commands and MPV updates.
         let mut timeout_interval = tokio::time::interval_at(
             Instant::now() + Duration::from_secs(10),
@@ -210,47 +203,37 @@ impl Player {
                 self.mpv
                     .command("loadfile", &[url.as_str(), "replace"])
                     .map_err(mpv_err)?;
-                self.state.station_url = Some(url);
+                Ok(())
             }
 
-            // PlayerCommand::Play => {
-            //     return self.mpv.set_property("pause", false).map_err(mpv_err);
-            // }
-
-            // PlayerCommand::Pause => {
-            //     return self.mpv.set_property("pause", true).map_err(mpv_err);
-            // }
             PlayerCommand::Toggle => {
                 let connection = self.state.connection_state;
                 let pause = match connection {
                     ConnectionState::Disconnected => false,
-                    ConnectionState::Connecting => true,
+                    // ConnectionState::Connecting => true,
                     ConnectionState::Buffering => true,
                     ConnectionState::Playing => true,
                     ConnectionState::Paused => false,
                 };
-                return self.mpv.set_property("pause", pause).map_err(mpv_err);
+                self.mpv.set_property("pause", pause).map_err(mpv_err)
             }
 
             PlayerCommand::SetVolume(volume) => {
-                return self.mpv.set_property("volume", volume).map_err(mpv_err);
+                self.mpv.set_property("volume", volume).map_err(mpv_err)
             }
             PlayerCommand::VolumeUp => {
                 let volume = self.state.volume;
-                return self
-                    .mpv
+                self.mpv
                     .set_property("volume", (volume + 5).min(100))
-                    .map_err(mpv_err);
+                    .map_err(mpv_err)
             }
 
             PlayerCommand::VolumeDown => {
                 let volume = self.state.volume;
-                return self
-                    .mpv
+                self.mpv
                     .set_property("volume", (volume - 5).max(0))
-                    .map_err(mpv_err);
+                    .map_err(mpv_err)
             }
         }
-        Ok(())
     }
 }

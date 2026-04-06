@@ -5,6 +5,8 @@ use std::time::Duration;
 use tokio::sync::mpsc;
 use url::Url;
 
+use crate::stations::Station;
+
 /// The frequency at which tick events are emitted.
 const TICK_FPS: f64 = 30.0;
 
@@ -35,9 +37,9 @@ pub enum AppEvent {
     /// Quit the application.
     Quit,
     /// Change to the currently selected station.
-    NewStationUrl(Url),
+    NewStationUrl(Station, Url),
     /// Station lookup failed.
-    StationUrlFailed,
+    StationUrlFailed(Station),
 }
 
 /// Terminal event handler.
