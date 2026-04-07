@@ -1,12 +1,11 @@
 use std::collections::HashMap;
-
+use anyhow::{anyhow, Result};
 use crate::cli::AppConfig;
 use crate::event::{AppEvent, Event, EventHandler};
 use crate::player::{Player, PlayerCommand, PlayerState};
 use crate::stations::{CLASSICAL_STATIONS, Station};
 use crate::ui::{StationSelector, UiStyles};
 
-use color_eyre::eyre::{OptionExt, eyre};
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use futures::FutureExt;
 use radiobrowser::RadioBrowserAPI;
@@ -101,13 +100,13 @@ impl App {
     }
 
     /// Run the application's main loop.
-    pub async fn run(mut self, mut terminal: DefaultTerminal) -> color_eyre::Result<()> {
-        // Get the station list, pick the configured station, statrt looking up its url.
+    pub async fn run(mut self, mut terminal: DefaultTerminal) -> Result<()> {
+        // Get the station list, pick the configured station, start looking up its url.
         self.change_station(self.station_selector.station());
         // Create the player and send it an initial config.
         let player = Player::new(
             self.state_tx.clone(),
-            self.cmd_rx.take().ok_or_eyre("Couldn't get cmd_rx")?,
+            self.cmd_rx.take().ok_or_else(|| anyhow!("Couldn't create cmd_rx"))?,
         );
         let mut player_join_handle = tokio::spawn(player.run()).fuse();
         self.cmd_tx.send(PlayerCommand::SetVolume(80))?;
@@ -144,7 +143,7 @@ impl App {
                     match join {
                         Ok(Ok(())) => return Ok(()), // player quit cleanly
                         Ok(Err(e)) => return Err(e), // player quit with an error
-                        Err(e) => return Err(eyre!("Player panicked: {}",e))
+                        Err(e) => return Err(anyhow!("Player panicked: {}",e))
                     }
                 }
                 maybe_player = self.state_rx.recv() => {
@@ -159,7 +158,7 @@ impl App {
     }
 
     /// Handles the key events and updates the state of [`App`].
-    pub fn handle_key_events(&mut self, key_event: KeyEvent) -> color_eyre::Result<()> {
+    pub fn handle_key_events(&mut self, key_event: KeyEvent) -> Result<()> {
         match key_event.code {
             // Keys that always work regardless of mode.
             KeyCode::Char('q') => self.event_handler.send(AppEvent::Quit),
@@ -171,9 +170,9 @@ impl App {
             KeyCode::Char('+' | '=') => self.cmd_tx.send(PlayerCommand::VolumeUp)?,
             KeyCode::Char('s') => self.show_station_selector = true,
             _ => {
-                if self.show_station_selector {
-                    match self.station_selector.handle_key_events(key_event) {
-                        crate::ui::StationSelectorResult::None => {}
+                if self.show_station_selector
+                && let Some(event) = self.station_selector.handle_key_events(key_event){
+                    match event {
                         crate::ui::StationSelectorResult::Scrolling => {}
                         crate::ui::StationSelectorResult::CloseSelector => {
                             self.show_station_selector = false
@@ -184,8 +183,6 @@ impl App {
                         }
                     }
                 }
-                // Check mode
-                // Send to mode handlers
             }
         }
         Ok(())

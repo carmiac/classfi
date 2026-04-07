@@ -1,4 +1,5 @@
 use clap::Parser;
+use anyhow::Result;
 #[macro_use]
 extern crate tracing;
 mod app;
@@ -12,8 +13,7 @@ use app::App;
 use cli::{AppConfig, log_init};
 
 #[tokio::main]
-async fn main() -> color_eyre::Result<()> {
-    color_eyre::install()?;
+async fn main() -> Result<()> {
     log_init()?;
 
     debug!("Loading config");

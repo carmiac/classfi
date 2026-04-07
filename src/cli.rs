@@ -1,6 +1,7 @@
 //! CLI Options and general application utilities.
+use anyhow::Result;
 use clap::Parser;
-use etcetera::{AppStrategy, AppStrategyArgs, choose_app_strategy};
+use etcetera::{choose_app_strategy, AppStrategy, AppStrategyArgs};
 use tracing_error::ErrorLayer;
 use tracing_subscriber::{filter, fmt, prelude::*};
 
@@ -15,7 +16,7 @@ pub fn dir_strategy() -> etcetera::app_strategy::Xdg {
 }
 
 // Setup logging
-pub fn log_init() -> color_eyre::Result<()> {
+pub fn log_init() -> Result<()> {
     let directory = dir_strategy().data_dir();
     std::fs::create_dir_all(&directory)?;
     let log_path = directory.join(env!("CARGO_PKG_NAME"));
@@ -44,6 +45,7 @@ pub struct AppConfig {
     /// Color Theme Name
     #[arg(short, long)]
     pub theme: Option<String>,
+    // Debug level
 }
 
 const VERSION_MESSAGE: &str = concat!(

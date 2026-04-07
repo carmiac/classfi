@@ -11,7 +11,6 @@ crossterm = { version = "0.28.1", features = ["event-stream"] }
 futures = "0.3.31"
 ratatui = "0.30.0"
 tokio = { version = "1.40.0", features = ["full"] }
-color-eyre = "0.6.3"
 tca-ratatui = "0.6.0"
 url = "2.5.8"
 radiobrowser = "0.6.1"
@@ -21,6 +20,7 @@ etcetera = "0.11.0"
 tracing = "0.1.44"
 tracing-error = "0.2.1"
 tracing-subscriber = "0.3.23"
+anyhow = "1.0.102"
 
 [build-dependencies]
 vergen-gix = { version = "9.1.0", features = ["build", "cargo"] }

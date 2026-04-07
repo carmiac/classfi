@@ -4,13 +4,13 @@ Heavily inspired by [lowfi](https://github.com/talwat/lowfi), but for classical 
 
 ## TODO
 
+- [ ] cpu useage investigation
 - [ ] fix blank screen hang on start
+  - [ ] TcaTheme bug!!
 - [ ] better option list for --station
 - [ ] debug level option
 - [ ] add tests
 - [ ] add theme/highlighting in popup
-- [ ] Verify station names for radio browser search
-  - [ ] add separate search term from station name
 - [ ] cache station URLs to disk
 - [ ] better player state reporting/tracking
   - [ ] test via flakey connection tools

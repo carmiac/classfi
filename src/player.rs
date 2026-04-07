@@ -1,5 +1,5 @@
 //! Async streaming radio player using libmvp2.
-use color_eyre::eyre::{Result, eyre};
+use anyhow::{Result, Error, anyhow};
 use libmpv2::{
     Format, Mpv,
     events::{Event, PropertyData},
@@ -8,9 +8,9 @@ use tokio::sync::mpsc;
 use tokio::time::{Duration, Instant};
 use url::Url;
 
-// Map mpv errors to color_eyre errors to deal with threading issues.
-fn mpv_err(e: libmpv2::Error) -> color_eyre::eyre::Error {
-    eyre!("mpv error: {e}")
+// Map mpv errors to anyhow_eyre errors to deal with threading issues.
+fn mpv_err(e: libmpv2::Error) -> Error {
+    anyhow!("mpv error: {e}")
 }
 
 #[derive(Debug, Default, Clone)]
@@ -128,7 +128,7 @@ impl Player {
                     },
                     _ = timeout_interval.tick() => {
                         // Mvp timed out, must have crashed or something.
-                        return Err(eyre!("Mvp timeout."));
+                        return Err(anyhow!("Mvp timeout."));
                     }
             }
         }

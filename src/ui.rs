@@ -135,8 +135,7 @@ impl Widget for &App {
         if self.show_station_selector {
             let centered_area =
                 area.centered(Constraint::Percentage(65), Constraint::Percentage(65));
-            let clear = Clear::default();
-            clear.render(centered_area, buf);
+            Clear.render(centered_area, buf);
             self.station_selector.render(centered_area, buf);
         }
     }
@@ -148,8 +147,6 @@ pub struct StationSelector {
 }
 
 pub enum StationSelectorResult {
-    /// Not our problem
-    None,
     /// User is scrolling
     Scrolling,
     /// User wants to close the selector
@@ -159,29 +156,28 @@ pub enum StationSelectorResult {
 }
 
 impl StationSelector {
-    pub fn handle_key_events(&mut self, key_event: KeyEvent) -> StationSelectorResult {
+    pub fn handle_key_events(&mut self, key_event: KeyEvent) -> Option<StationSelectorResult> {
         match key_event.code {
             // Keys that always work regardless of mode.
-            KeyCode::Esc => StationSelectorResult::CloseSelector,
+            KeyCode::Esc => Some(StationSelectorResult::CloseSelector),
             KeyCode::Enter => {
                 let idx = self.table_state.borrow().selected().unwrap_or(0);
-                StationSelectorResult::NewStation(CLASSICAL_STATIONS[idx])
+                Some(StationSelectorResult::NewStation(CLASSICAL_STATIONS[idx]))
             }
             KeyCode::Up => {
                 self.table_state.borrow_mut().select_previous();
-                StationSelectorResult::Scrolling
+                Some(StationSelectorResult::Scrolling)
             }
             KeyCode::Down => {
                 self.table_state.borrow_mut().select_next();
-                StationSelectorResult::Scrolling
+                Some(StationSelectorResult::Scrolling)
             }
-            _ => StationSelectorResult::None,
+            _ => None,
         }
     }
 
     pub fn station(&self) -> Station {
         let idx = self.table_state.borrow().selected().unwrap_or(0);
-        debug!("station idx: {:?}", idx);
         CLASSICAL_STATIONS[idx]
     }
 
