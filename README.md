@@ -4,12 +4,11 @@ Heavily inspired by [lowfi](https://github.com/talwat/lowfi), but for classical 
 
 ## TODO
 
-- [ ] cpu useage investigation
-- [ ] fix blank screen hang on start
-  - [ ] TcaTheme bug!!
-- [ ] better option list for --station
 - [ ] debug level option
-- [ ] add tests
+- [ ] cpu useage investigation
+- [ ] theme isn't being set from cli?
+- [ ] better option list for --station
+- [ ] add tests?
 - [ ] add theme/highlighting in popup
 - [ ] cache station URLs to disk
 - [ ] better player state reporting/tracking

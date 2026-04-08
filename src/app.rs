@@ -1,10 +1,11 @@
 use std::collections::HashMap;
 use anyhow::{anyhow, Result};
+use tca_ratatui::StyleSet;
 use crate::cli::AppConfig;
 use crate::event::{AppEvent, Event, EventHandler};
 use crate::player::{Player, PlayerCommand, PlayerState};
 use crate::stations::{CLASSICAL_STATIONS, Station};
-use crate::ui::{StationSelector, UiStyles};
+use crate::ui::StationSelector;
 
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use futures::FutureExt;
@@ -25,7 +26,7 @@ pub struct App {
     station_urls: HashMap<Station, Url>,
     pub(crate) station_selector: StationSelector,
     pub(crate) show_station_selector: bool,
-    pub(crate) styles: crate::ui::UiStyles,
+    pub(crate) styles: StyleSet,
     pub(crate) player_state: PlayerState,
 }
 
@@ -43,7 +44,7 @@ impl Default for App {
             cmd_tx,
             cmd_rx: Some(cmd_rx),
             station_selector: StationSelector::default(),
-            styles: UiStyles::default(),
+            styles: StyleSet::default(),
             player_state: PlayerState::default(),
             station_urls: HashMap::new(),
         }
@@ -55,8 +56,13 @@ impl App {
     pub fn new(config: AppConfig) -> Self {
         let mut station_selector = StationSelector::default();
         station_selector.set_station_idx(config.station);
+        let styles = if let Some(name) = config.theme {
+            StyleSet::from_name(&name)
+        } else {
+            StyleSet::default()
+        };
         App {
-            styles: UiStyles::from(config.theme),
+            styles,
             station_selector,
             ..Default::default()
         }

@@ -3756,29 +3756,23 @@ dependencies = [
 [[package]]
 name = "tca-ratatui"
 version = "0.6.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3ec38fab31e00c927b7b2bf6db68db6332ef63828ecf95c1b8764d36655b1678"
 dependencies = [
  "anyhow",
  "heck",
  "ratatui",
  "serde",
  "tca-types",
- "terminal-colorsaurus",
 ]
 
 [[package]]
 name = "tca-types"
 version = "0.6.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "de91648e8680e1c8301b46885a6fb501f965bd32686479c19780423cc6de047e"
 dependencies = [
  "anyhow",
  "etcetera",
  "heck",
  "serde",
  "strum 0.28.0",
- "terminal-colorsaurus",
  "thiserror 2.0.18",
  "toml",
 ]
@@ -3793,32 +3787,6 @@ dependencies = [
  "getrandom 0.4.2",
  "once_cell",
  "rustix 1.1.4",
- "windows-sys 0.61.2",
-]
-
-[[package]]
-name = "terminal-colorsaurus"
-version = "1.0.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7a46bb5364467da040298c573c8a95dbf9a512efc039630409a03126e3703e90"
-dependencies = [
- "cfg-if",
- "libc",
- "memchr",
- "mio",
- "terminal-trx",
- "windows-sys 0.61.2",
- "xterm-color",
-]
-
-[[package]]
-name = "terminal-trx"
-version = "0.2.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3b3f27d9a8a177e57545481faec87acb45c6e854ed1e5a3658ad186c106f38ed"
-dependencies = [
- "cfg-if",
- "libc",
  "windows-sys 0.61.2",
 ]
 
@@ -4925,12 +4893,6 @@ name = "writeable"
 version = "0.6.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9edde0db4769d2dc68579893f2306b26c6ecfbe0ef499b013d731b7b9247e0b9"
-
-[[package]]
-name = "xterm-color"
-version = "1.0.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7008a9d8ba97a7e47d9b2df63fcdb8dade303010c5a7cd5bf2469d4da6eba673"
 
 [[package]]
 name = "yoke"

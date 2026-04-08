@@ -8,55 +8,11 @@ use crossterm::event::{KeyCode, KeyEvent};
 use ratatui::{
     buffer::Buffer,
     layout::{Alignment, Constraint, Layout, Rect},
-    style::Style,
     symbols,
     text::{Line, Span},
     widgets::{Block, BorderType, Clear, LineGauge, Paragraph, Row, Table, TableState, Widget},
 };
-use tca_ratatui::TcaTheme;
-
-#[derive(Debug, Clone)]
-pub(crate) struct UiStyles {
-    pub primary: Style,
-    pub border: Style,
-    pub info: Style,
-    pub error: Style,
-    pub warn: Style,
-}
-
-impl Default for UiStyles {
-    fn default() -> Self {
-        Self::from(&TcaTheme::default())
-    }
-}
-impl From<&TcaTheme> for UiStyles {
-    fn from(value: &TcaTheme) -> Self {
-        UiStyles {
-            primary: Style::default()
-                .fg(value.ui.fg_primary)
-                .bg(value.ui.bg_primary),
-            border: Style::default()
-                .fg(value.ui.border_primary)
-                .bg(value.ui.bg_primary)
-                .bold(),
-            info: Style::default()
-                .fg(value.semantic.info)
-                .bg(value.ui.bg_primary),
-            error: Style::default()
-                .fg(value.semantic.error)
-                .bg(value.ui.bg_primary),
-            warn: Style::default()
-                .fg(value.semantic.warning)
-                .bg(value.ui.bg_primary),
-        }
-    }
-}
-
-impl From<Option<String>> for UiStyles {
-    fn from(value: Option<String>) -> Self {
-        Self::from(&TcaTheme::new(value.as_deref()))
-    }
-}
+use tca_ratatui::StyleSet;
 
 impl Widget for &App {
     /// Renders the user interface widgets.
@@ -95,7 +51,7 @@ impl Widget for &App {
             // }
             crate::player::ConnectionState::Buffering => {
                 Line::from(format!("Buffering... {}%", self.player_state.cache))
-                    .style(self.styles.warn)
+                    .style(self.styles.warning)
             }
             crate::player::ConnectionState::Playing => {
                 let seconds = self.player_state.play_time as i64;
@@ -144,6 +100,8 @@ impl Widget for &App {
 pub struct StationSelector {
     /// Widget state
     table_state: RefCell<TableState>,
+    /// Style Set
+    styles: Option<StyleSet>,
 }
 
 pub enum StationSelectorResult {
@@ -190,6 +148,7 @@ impl Default for StationSelector {
     fn default() -> Self {
         StationSelector {
             table_state: TableState::default().into(),
+            styles: None,
         }
     }
 }
