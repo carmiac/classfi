@@ -1,8 +1,8 @@
 //! CLI Options and general application utilities.
 use anyhow::Result;
-use clap::Parser;
+use clap::{Parser, ValueEnum};
 use clap_verbosity_flag::Verbosity;
-use etcetera::{AppStrategy, AppStrategyArgs, choose_app_strategy};
+use etcetera::{choose_app_strategy, AppStrategy, AppStrategyArgs};
 use tracing_error::ErrorLayer;
 use tracing_subscriber::{fmt, prelude::*};
 
@@ -34,6 +34,29 @@ pub fn log_init(verbosity: &Verbosity) -> Result<()> {
         .with(ErrorLayer::default())
         .try_init()?;
     Ok(())
+}
+
+#[derive(Debug, Default, Copy, Clone, ValueEnum)]
+enum ClassicalStations {
+    #[default]
+    #[value(alias = "cc")]
+    ClassicalCalifornia,
+    #[value(alias = "ul")]
+    Ulitmate,
+    #[value(alias = "ge")]
+    GreatEscape,
+    #[value(alias = "nm-en")]
+    NuestraMusicaEn,
+    #[value(alias = "nm-es")]
+    NuestraMusicaEs,
+    #[value(alias = "ar")]
+    Arcade,
+    #[value(alias = "am")]
+    Americana,
+    #[value(alias = "xmas")]
+    Christmas,
+    #[value(alias = "gl")]
+    Glissando,
 }
 
 // CLI parsing

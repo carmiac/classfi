@@ -4,21 +4,29 @@ Heavily inspired by [lowfi](https://github.com/talwat/lowfi), but for classical 
 
 ## TODO
 
-- [ ] theme isn't being set from cli?
+### 0.1.0 Release
+
 - [ ] better option list for --station
-- [ ] add tests?
 - [ ] add theme/highlighting in popup
+- [ ] Write some documentation
+
+### Future
+
 - [ ] cache station URLs to disk
+- [ ] Station display name/lookup name split
+- [ ] Stream info (file type, bitrate, etc)
 - [ ] better player state reporting/tracking
   - [ ] test via flakey connection tools
   - [ ] look at ignored messages from mpv
-- [ ] Write some documentation
+    - Getting URL -> finding stream
+    - Got URL -> found stream
+    - StartFile -> Connecting
+    - FileLoaded -> Connected
+    - PlaybackRestart -> Playing
 - [ ] add media key handling
-- [ ] add CLI flags
-  - [ ] stream
 - [ ] one line UI
-- [ ] theme switching
 - [ ] Create alternate versions with different sources
+  - https://docs.rs/clap/latest/clap/_cookbook/multicall_busybox/index.html
 
 ## References
 

@@ -133,18 +133,7 @@ impl App {
                             }
                             _ => {}
                         },
-                        Event::App(app_event) => match app_event {
-                            AppEvent::Quit=>self.quit(),
-                            AppEvent::NewStationUrl(station, url)=> {
-                                // Add to the url table
-                                self.station_urls.insert(station, url.clone());
-                                // If for the current station, send the new url to the player
-                                if self.station == station{
-                                _ = self.cmd_tx.send(PlayerCommand::SetStation(url));
-                                }
-                            },
-                            AppEvent::StationUrlFailed(station) => {info!("Failed url lookup for {:?}", station);}
-                        },
+                        Event::App(app_event) => self.handle_app_event(app_event),
                     }
                  }
                 join = &mut player_join_handle => {
@@ -203,5 +192,116 @@ impl App {
     /// Set running to false to quit the application.
     pub fn quit(&mut self) {
         self.running = false;
+    }
+
+    fn handle_app_event(&mut self, event: AppEvent) {
+        match event {
+            AppEvent::Quit => self.quit(),
+            AppEvent::NewStationUrl(station, url) => {
+                self.station_urls.insert(station, url.clone());
+                if self.station == station {
+                    _ = self.cmd_tx.send(PlayerCommand::SetStation(url));
+                }
+            }
+            AppEvent::StationUrlFailed(station) => {
+                info!("Failed url lookup for {:?}", station);
+            }
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::stations::CLASSICAL_STATIONS;
+
+    fn test_url() -> Url {
+        Url::parse("http://example.com/stream").unwrap()
+    }
+
+    /// Drain all commands currently queued on cmd_rx without running the event loop.
+    fn drain_commands(app: &mut App) -> Vec<PlayerCommand> {
+        let mut cmds = Vec::new();
+        if let Some(rx) = &mut app.cmd_rx {
+            while let Ok(cmd) = rx.try_recv() {
+                cmds.push(cmd);
+            }
+        }
+        cmds
+    }
+
+    #[tokio::test]
+    async fn new_station_url_for_current_station_sends_command_and_caches() {
+        let mut app = App::default();
+        let station = app.station;
+        let url = test_url();
+
+        app.handle_app_event(AppEvent::NewStationUrl(station, url.clone()));
+
+        assert_eq!(app.station_urls.get(&station), Some(&url));
+        let cmds = drain_commands(&mut app);
+        assert!(
+            cmds.iter()
+                .any(|c| matches!(c, PlayerCommand::SetStation(u) if *u == url)),
+            "expected SetStation to be sent for the current station"
+        );
+    }
+
+    #[tokio::test]
+    async fn new_station_url_for_other_station_caches_but_no_command() {
+        let mut app = App::default();
+        let other = CLASSICAL_STATIONS[1];
+        assert_ne!(app.station, other);
+        let url = test_url();
+
+        app.handle_app_event(AppEvent::NewStationUrl(other, url.clone()));
+
+        assert_eq!(app.station_urls.get(&other), Some(&url));
+        let cmds = drain_commands(&mut app);
+        assert!(
+            cmds.is_empty(),
+            "expected no command to be sent for a non-current station"
+        );
+    }
+
+    #[tokio::test]
+    async fn change_station_sends_command_on_cache_hit() {
+        let mut app = App::default();
+        let station = CLASSICAL_STATIONS[1];
+        let url = test_url();
+        app.station_urls.insert(station, url.clone());
+
+        app.change_station(station);
+
+        assert_eq!(app.station, station);
+        let cmds = drain_commands(&mut app);
+        assert!(
+            cmds.iter()
+                .any(|c| matches!(c, PlayerCommand::SetStation(u) if *u == url)),
+            "expected SetStation to be sent when URL is cached"
+        );
+    }
+
+    #[tokio::test]
+    async fn change_station_no_command_on_cache_miss() {
+        let mut app = App::default();
+        let station = CLASSICAL_STATIONS[1];
+
+        app.change_station(station);
+
+        assert_eq!(app.station, station);
+        let cmds = drain_commands(&mut app);
+        assert!(
+            cmds.is_empty(),
+            "expected no command when URL is not cached yet"
+        );
+    }
+
+    #[tokio::test]
+    async fn quit_sets_not_running() {
+        let mut app = App::default();
+        assert!(app.running);
+        app.quit();
+        assert!(!app.running);
     }
 }

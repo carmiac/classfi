@@ -8,7 +8,7 @@ use url::Url;
 use crate::stations::Station;
 
 /// The frequency at which tick events are emitted.
-const TICK_FPS: f64 = 30.0;
+const TICK_FPS: f64 = 1.0;
 
 /// Representation of all possible events.
 #[derive(Clone, Debug)]
