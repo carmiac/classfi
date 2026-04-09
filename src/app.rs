@@ -54,12 +54,12 @@ impl Default for App {
 impl App {
     /// Constructs a new instance of [`App`].
     pub fn new(config: AppConfig) -> Self {
-        let mut station_selector = StationSelector::default();
         let styles = if let Some(name) = config.theme {
             StyleSet::from_name(&name)
         } else {
             StyleSet::default()
         };
+        let station_selector = StationSelector::default().styles(styles.clone());
         App {
             styles,
             station_selector,

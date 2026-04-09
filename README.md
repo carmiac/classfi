@@ -6,14 +6,13 @@ Heavily inspired by [lowfi](https://github.com/talwat/lowfi), but for classical 
 
 ### 0.1.0 Release
 
-- [ ] better option list for --station
-- [ ] add theme/highlighting in popup
 - [ ] Write some documentation
+- [ ] CI testing
+- [ ] CI release binary
 
 ### Future
 
 - [ ] cache station URLs to disk
-- [ ] Station display name/lookup name split
 - [ ] Stream info (file type, bitrate, etc)
 - [ ] better player state reporting/tracking
   - [ ] test via flakey connection tools

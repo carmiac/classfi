@@ -141,6 +141,11 @@ impl StationSelector {
         let idx = self.table_state.borrow().selected().unwrap_or(0);
         ClassicalStations::value_variants()[idx].station()
     }
+
+    pub fn styles(mut self, styles: StyleSet) -> Self {
+        self.styles = Some(styles);
+        self
+    }
 }
 
 impl Default for StationSelector {
@@ -168,7 +173,6 @@ static STATION_COL_WIDTHS: LazyLock<(u16, u16)> = LazyLock::new(|| {
 
 impl Widget for &StationSelector {
     fn render(self, area: Rect, buf: &mut Buffer) {
-        // TODO: Get style
         let (name_width, desc_width) = *STATION_COL_WIDTHS;
         let rows: Vec<Row> = ClassicalStations::value_variants()
             .iter()
@@ -180,15 +184,30 @@ impl Widget for &StationSelector {
             })
             .collect();
 
-        let block = Block::bordered().title("Select a new station, Esc to cancel");
         let widths = [
             Constraint::Min(name_width + 2),
             Constraint::Min(desc_width + 2),
         ];
-        let table = Table::new(rows, widths)
-            .header(Row::new(vec!["Name", "Description"]))
-            .highlight_symbol(">>")
-            .block(block);
+
+        let block = Block::bordered().title("Select a new station, Esc to cancel");
+        let block = if let Some(style) = &self.styles {
+            block
+                .border_style(style.border)
+                .title_style(style.primary)
+                .style(style.primary)
+        } else {
+            block
+        };
+
+        let table = Table::new(rows, widths).block(block);
+        let table = if let Some(style) = &self.styles {
+            table
+                .header(Row::new(vec!["Name", "Description"]).style(style.info))
+                .style(style.primary)
+                .row_highlight_style(style.selection)
+        } else {
+            table.header(Row::new(vec!["Name", "Description"]))
+        };
 
         ratatui::widgets::StatefulWidget::render(
             table,
