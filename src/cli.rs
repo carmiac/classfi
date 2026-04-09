@@ -1,6 +1,6 @@
 //! CLI Options and general application utilities.
 use anyhow::Result;
-use clap::{Parser, ValueEnum};
+use clap::Parser;
 use clap_verbosity_flag::Verbosity;
 use etcetera::{choose_app_strategy, AppStrategy, AppStrategyArgs};
 use tracing_error::ErrorLayer;
@@ -36,36 +36,12 @@ pub fn log_init(verbosity: &Verbosity) -> Result<()> {
     Ok(())
 }
 
-#[derive(Debug, Default, Copy, Clone, ValueEnum)]
-enum ClassicalStations {
-    #[default]
-    #[value(alias = "cc")]
-    ClassicalCalifornia,
-    #[value(alias = "ul")]
-    Ulitmate,
-    #[value(alias = "ge")]
-    GreatEscape,
-    #[value(alias = "nm-en")]
-    NuestraMusicaEn,
-    #[value(alias = "nm-es")]
-    NuestraMusicaEs,
-    #[value(alias = "ar")]
-    Arcade,
-    #[value(alias = "am")]
-    Americana,
-    #[value(alias = "xmas")]
-    Christmas,
-    #[value(alias = "gl")]
-    Glissando,
-}
-
 // CLI parsing
 #[derive(Parser, Debug, Default)]
 #[command(author, version = version(), about)]
 pub struct AppConfig {
-    /// Station Index
-    #[arg(short, long, default_value_t = 0)]
-    pub station: usize,
+    /// Initial Station
+    pub station: Option<crate::stations::ClassicalStations>,
     /// Color Theme Name
     #[arg(short, long)]
     pub theme: Option<String>,

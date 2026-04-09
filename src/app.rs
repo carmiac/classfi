@@ -1,7 +1,7 @@
 use crate::cli::AppConfig;
 use crate::event::{AppEvent, Event, EventHandler};
 use crate::player::{Player, PlayerCommand, PlayerState};
-use crate::stations::{CLASSICAL_STATIONS, Station};
+use crate::stations::{ClassicalStations, Station};
 use crate::ui::StationSelector;
 use anyhow::{Result, anyhow};
 use std::collections::HashMap;
@@ -37,7 +37,7 @@ impl Default for App {
         Self {
             running: true,
             show_station_selector: false,
-            station: CLASSICAL_STATIONS[0],
+            station: ClassicalStations::default().station(),
             event_handler: EventHandler::new(),
             state_tx,
             state_rx,
@@ -55,7 +55,6 @@ impl App {
     /// Constructs a new instance of [`App`].
     pub fn new(config: AppConfig) -> Self {
         let mut station_selector = StationSelector::default();
-        station_selector.set_station_idx(config.station);
         let styles = if let Some(name) = config.theme {
             StyleSet::from_name(&name)
         } else {
@@ -77,7 +76,7 @@ impl App {
             if let Ok(api) = RadioBrowserAPI::new().await.map_err(|e| e.to_string())
                 && let Ok(stations) = api
                     .get_stations()
-                    .name(station.name)
+                    .name(station.search)
                     .name_exact(true)
                     .send()
                     .await
@@ -213,7 +212,7 @@ impl App {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::stations::CLASSICAL_STATIONS;
+    use crate::stations::ClassicalStations;
 
     fn test_url() -> Url {
         Url::parse("http://example.com/stream").unwrap()
@@ -250,7 +249,7 @@ mod tests {
     #[tokio::test]
     async fn new_station_url_for_other_station_caches_but_no_command() {
         let mut app = App::default();
-        let other = CLASSICAL_STATIONS[1];
+        let other = ClassicalStations::Ulitmate.station();
         assert_ne!(app.station, other);
         let url = test_url();
 
@@ -267,7 +266,7 @@ mod tests {
     #[tokio::test]
     async fn change_station_sends_command_on_cache_hit() {
         let mut app = App::default();
-        let station = CLASSICAL_STATIONS[1];
+        let station = ClassicalStations::Ulitmate.station();
         let url = test_url();
         app.station_urls.insert(station, url.clone());
 
@@ -285,7 +284,7 @@ mod tests {
     #[tokio::test]
     async fn change_station_no_command_on_cache_miss() {
         let mut app = App::default();
-        let station = CLASSICAL_STATIONS[1];
+        let station = ClassicalStations::Ulitmate.station();
 
         app.change_station(station);
 

@@ -2,8 +2,9 @@ use std::cell::RefCell;
 
 use crate::{
     app::App,
-    stations::{CLASSICAL_STATIONS, Station},
+    stations::{ClassicalStations, Station},
 };
+use clap::ValueEnum;
 use crossterm::event::{KeyCode, KeyEvent};
 use ratatui::{
     buffer::Buffer,
@@ -120,7 +121,9 @@ impl StationSelector {
             KeyCode::Esc => Some(StationSelectorResult::CloseSelector),
             KeyCode::Enter => {
                 let idx = self.table_state.borrow().selected().unwrap_or(0);
-                Some(StationSelectorResult::NewStation(CLASSICAL_STATIONS[idx]))
+                Some(StationSelectorResult::NewStation(
+                    ClassicalStations::value_variants()[idx].station(),
+                ))
             }
             KeyCode::Up => {
                 self.table_state.borrow_mut().select_previous();
@@ -136,11 +139,7 @@ impl StationSelector {
 
     pub fn station(&self) -> Station {
         let idx = self.table_state.borrow().selected().unwrap_or(0);
-        CLASSICAL_STATIONS[idx]
-    }
-
-    pub fn set_station_idx(&mut self, idx: usize) {
-        self.table_state = TableState::default().with_selected(idx).into();
+        ClassicalStations::value_variants()[idx].station()
     }
 }
 
@@ -156,8 +155,9 @@ impl Default for StationSelector {
 use std::sync::LazyLock;
 
 static STATION_COL_WIDTHS: LazyLock<(u16, u16)> = LazyLock::new(|| {
-    CLASSICAL_STATIONS
+    ClassicalStations::value_variants()
         .iter()
+        .map(|v| v.station())
         .fold((0, 0), |(name_w, desc_w), s| {
             (
                 name_w.max(s.name.len() as u16),
@@ -170,9 +170,14 @@ impl Widget for &StationSelector {
     fn render(self, area: Rect, buf: &mut Buffer) {
         // TODO: Get style
         let (name_width, desc_width) = *STATION_COL_WIDTHS;
-        let rows: Vec<Row> = CLASSICAL_STATIONS
+        let rows: Vec<Row> = ClassicalStations::value_variants()
             .iter()
-            .map(|s| Row::new(vec![s.name.to_string(), s.description.to_string()]))
+            .map(|s| {
+                Row::new(vec![
+                    s.station().name.to_string(),
+                    s.station().description.to_string(),
+                ])
+            })
             .collect();
 
         let block = Block::bordered().title("Select a new station, Esc to cancel");
