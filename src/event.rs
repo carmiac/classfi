@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 use crossterm::event::Event as CrosstermEvent;
 use futures::{FutureExt, StreamExt};
 use std::time::Duration;
@@ -72,7 +72,8 @@ impl EventHandler {
     pub async fn next(&mut self) -> Result<Event> {
         self.receiver
             .recv()
-            .await.ok_or_else(|| anyhow!("Failed to receive event."))
+            .await
+            .ok_or_else(|| anyhow!("Failed to receive event."))
     }
 
     /// Queue an app event to be sent to the event receiver.

@@ -1,9 +1,10 @@
 //! CLI Options and general application utilities.
 use anyhow::Result;
 use clap::Parser;
-use etcetera::{choose_app_strategy, AppStrategy, AppStrategyArgs};
+use clap_verbosity_flag::Verbosity;
+use etcetera::{AppStrategy, AppStrategyArgs, choose_app_strategy};
 use tracing_error::ErrorLayer;
-use tracing_subscriber::{filter, fmt, prelude::*};
+use tracing_subscriber::{fmt, prelude::*};
 
 // Useful directories.
 pub fn dir_strategy() -> etcetera::app_strategy::Xdg {
@@ -16,10 +17,10 @@ pub fn dir_strategy() -> etcetera::app_strategy::Xdg {
 }
 
 // Setup logging
-pub fn log_init() -> Result<()> {
+pub fn log_init(verbosity: &Verbosity) -> Result<()> {
     let directory = dir_strategy().data_dir();
     std::fs::create_dir_all(&directory)?;
-    let log_path = directory.join(env!("CARGO_PKG_NAME"));
+    let log_path = directory.join(env!("CARGO_PKG_NAME")).with_extension("log");
     let log_file = std::fs::File::create(log_path)?;
     let file_subscriber = fmt::layer()
         .with_file(true)
@@ -27,7 +28,7 @@ pub fn log_init() -> Result<()> {
         .with_writer(log_file)
         .with_target(false)
         .with_ansi(false)
-        .with_filter(filter::LevelFilter::DEBUG);
+        .with_filter(verbosity.tracing_level_filter());
     tracing_subscriber::registry()
         .with(file_subscriber)
         .with(ErrorLayer::default())
@@ -46,6 +47,8 @@ pub struct AppConfig {
     #[arg(short, long)]
     pub theme: Option<String>,
     // Debug level
+    #[command(flatten)]
+    pub verbosity: Verbosity,
 }
 
 const VERSION_MESSAGE: &str = concat!(

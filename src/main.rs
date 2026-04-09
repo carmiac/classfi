@@ -1,5 +1,5 @@
-use clap::Parser;
 use anyhow::Result;
+use clap::Parser;
 #[macro_use]
 extern crate tracing;
 mod app;
@@ -14,11 +14,9 @@ use cli::{AppConfig, log_init};
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    log_init()?;
-
-    debug!("Loading config");
     let config = AppConfig::parse();
-    debug!("Creating terminal");
+    log_init(&config.verbosity)?;
+    debug!("Setting panic hook");
     let default_hook = std::panic::take_hook();
     std::panic::set_hook(Box::new(move |info| {
         ratatui::restore();

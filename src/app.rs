@@ -1,11 +1,11 @@
-use std::collections::HashMap;
-use anyhow::{anyhow, Result};
-use tca_ratatui::StyleSet;
 use crate::cli::AppConfig;
 use crate::event::{AppEvent, Event, EventHandler};
 use crate::player::{Player, PlayerCommand, PlayerState};
 use crate::stations::{CLASSICAL_STATIONS, Station};
 use crate::ui::StationSelector;
+use anyhow::{Result, anyhow};
+use std::collections::HashMap;
+use tca_ratatui::StyleSet;
 
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use futures::FutureExt;
@@ -75,18 +75,18 @@ impl App {
         let sender = self.event_handler.sender.clone();
         tokio::spawn(async move {
             if let Ok(api) = RadioBrowserAPI::new().await.map_err(|e| e.to_string())
-            && let Ok(stations) = api
-                .get_stations()
-                .name(station.name)
-                .name_exact(true)
-                .send()
-                .await
-                .map_err(|e| e.to_string())
-            && let Some(s) = stations.into_iter().next()
+                && let Ok(stations) = api
+                    .get_stations()
+                    .name(station.name)
+                    .name_exact(true)
+                    .send()
+                    .await
+                    .map_err(|e| e.to_string())
+                && let Some(s) = stations.into_iter().next()
             {
                 info!("Got URL: {} for station {:?}", s.url_resolved, station);
                 if let Ok(url) = Url::parse(s.url_resolved.as_str()) {
-                        _ = sender.send(Event::App(AppEvent::NewStationUrl(station, url)));
+                    _ = sender.send(Event::App(AppEvent::NewStationUrl(station, url)));
                 } else {
                     _ = sender.send(Event::App(AppEvent::StationUrlFailed(station)));
                 }
@@ -98,8 +98,8 @@ impl App {
     fn change_station(&mut self, station: Station) {
         self.station = station;
         // Check that we have the url.
-        if let Some(url) = self.station_urls.get(&station){
-               _ = self.cmd_tx.send(PlayerCommand::SetStation(url.clone()));
+        if let Some(url) = self.station_urls.get(&station) {
+            _ = self.cmd_tx.send(PlayerCommand::SetStation(url.clone()));
         } else {
             self.get_url(station);
         }
@@ -112,7 +112,9 @@ impl App {
         // Create the player and send it an initial config.
         let player = Player::new(
             self.state_tx.clone(),
-            self.cmd_rx.take().ok_or_else(|| anyhow!("Couldn't create cmd_rx"))?,
+            self.cmd_rx
+                .take()
+                .ok_or_else(|| anyhow!("Couldn't create cmd_rx"))?,
         );
         let mut player_join_handle = tokio::spawn(player.run()).fuse();
         self.cmd_tx.send(PlayerCommand::SetVolume(80))?;
@@ -135,7 +137,7 @@ impl App {
                             AppEvent::Quit=>self.quit(),
                             AppEvent::NewStationUrl(station, url)=> {
                                 // Add to the url table
-                                self.station_urls.insert(station, url.clone());  
+                                self.station_urls.insert(station, url.clone());
                                 // If for the current station, send the new url to the player
                                 if self.station == station{
                                 _ = self.cmd_tx.send(PlayerCommand::SetStation(url));
@@ -177,7 +179,8 @@ impl App {
             KeyCode::Char('s') => self.show_station_selector = true,
             _ => {
                 if self.show_station_selector
-                && let Some(event) = self.station_selector.handle_key_events(key_event){
+                    && let Some(event) = self.station_selector.handle_key_events(key_event)
+                {
                     match event {
                         crate::ui::StationSelectorResult::Scrolling => {}
                         crate::ui::StationSelectorResult::CloseSelector => {

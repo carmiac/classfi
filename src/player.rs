@@ -1,5 +1,5 @@
 //! Async streaming radio player using libmvp2.
-use anyhow::{Result, Error, anyhow};
+use anyhow::{Error, Result, anyhow};
 use libmpv2::{
     Format, Mpv,
     events::{Event, PropertyData},
@@ -113,7 +113,7 @@ impl Player {
             Instant::now() + Duration::from_secs(10),
             Duration::from_secs(10),
         );
-        let mut property_interval = tokio::time::interval(Duration::from_millis(1000 / 30));
+        let mut property_interval = tokio::time::interval(Duration::from_millis(1000 / 4));
         loop {
             tokio::select! {
                     cmd = self.cmd_rx.recv() => match cmd {
@@ -121,10 +121,12 @@ impl Player {
                         None => break,
                     },
                     _ = property_interval.tick() => {
-                        self.process_mpv_events()?;
-                        // We got a good message, so reset the timeout.
-                        timeout_interval.reset();
-                        self.state_tx.send(self.state.clone())?;
+                        let num_events = self.process_mpv_events()?;
+                        if num_events > 0 {
+                            // We got a good message, so reset the timeout and send an update.
+                            timeout_interval.reset();
+                            self.state_tx.send(self.state.clone())?;
+                        }
                     },
                     _ = timeout_interval.tick() => {
                         // Mvp timed out, must have crashed or something.
@@ -135,8 +137,10 @@ impl Player {
         Ok(())
     }
 
-    fn process_mpv_events(&mut self) -> Result<()> {
+    fn process_mpv_events(&mut self) -> Result<usize> {
+        let mut msg_count = 0;
         while let Some(event) = self.mpv.wait_event(0.0) {
+            msg_count += 1;
             match event {
                 Err(err) => {
                     error!("Event error {}", err);
@@ -146,8 +150,9 @@ impl Player {
                     name: "time-pos",
                     change: PropertyData::Double(value),
                     ..
-                }) => self.state.play_time = value,
-
+                }) => {
+                    self.state.play_time = value;
+                }
                 Ok(Event::PropertyChange {
                     name: "volume",
                     change: PropertyData::Int64(value),
@@ -172,7 +177,6 @@ impl Player {
                     if value {
                         self.state.connection_state = ConnectionState::Paused
                     } else {
-                        // TODO: Really figure out how to track connection state.
                         self.state.connection_state = ConnectionState::Playing
                     }
                 }
@@ -192,7 +196,7 @@ impl Player {
                 }
             }
         }
-        Ok(())
+        Ok(msg_count)
     }
 
     /// Process commands.

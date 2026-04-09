@@ -4,8 +4,6 @@ Heavily inspired by [lowfi](https://github.com/talwat/lowfi), but for classical 
 
 ## TODO
 
-- [ ] debug level option
-- [ ] cpu useage investigation
 - [ ] theme isn't being set from cli?
 - [ ] better option list for --station
 - [ ] add tests?

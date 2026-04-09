@@ -2,7 +2,7 @@ use std::cell::RefCell;
 
 use crate::{
     app::App,
-    stations::{Station, CLASSICAL_STATIONS},
+    stations::{CLASSICAL_STATIONS, Station},
 };
 use crossterm::event::{KeyCode, KeyEvent};
 use ratatui::{
@@ -17,7 +17,7 @@ use tca_ratatui::StyleSet;
 impl Widget for &App {
     /// Renders the user interface widgets.
     fn render(self, area: Rect, buf: &mut Buffer) {
-        // Create the main frame (block) for the screen border.
+        // Create the main frame (block) for the screen border./
         let title = Line::from("ClassFi")
             .centered()
             .style(self.styles.border.bold());
@@ -153,28 +153,32 @@ impl Default for StationSelector {
     }
 }
 
+use std::sync::LazyLock;
+
+static STATION_COL_WIDTHS: LazyLock<(u16, u16)> = LazyLock::new(|| {
+    CLASSICAL_STATIONS
+        .iter()
+        .fold((0, 0), |(name_w, desc_w), s| {
+            (
+                name_w.max(s.name.len() as u16),
+                desc_w.max(s.description.len() as u16),
+            )
+        })
+});
+
 impl Widget for &StationSelector {
     fn render(self, area: Rect, buf: &mut Buffer) {
         // TODO: Get style
-        // Create the table
-        let mut rows = Vec::<Row>::new();
-        let mut name_width = 0;
-        let mut desc_width = 0;
-
-        for station in CLASSICAL_STATIONS {
-            name_width = name_width.max(station.name.len());
-            desc_width = desc_width.max(station.description.len());
-            let row = Row::new(vec![
-                station.name.to_string(),
-                station.description.to_string(),
-            ]);
-            rows.push(row);
-        }
+        let (name_width, desc_width) = *STATION_COL_WIDTHS;
+        let rows: Vec<Row> = CLASSICAL_STATIONS
+            .iter()
+            .map(|s| Row::new(vec![s.name.to_string(), s.description.to_string()]))
+            .collect();
 
         let block = Block::bordered().title("Select a new station, Esc to cancel");
         let widths = [
-            Constraint::Min(name_width as u16 + 2),
-            Constraint::Percentage(100),
+            Constraint::Min(name_width + 2),
+            Constraint::Min(desc_width + 2),
         ];
         let table = Table::new(rows, widths)
             .header(Row::new(vec!["Name", "Description"]))

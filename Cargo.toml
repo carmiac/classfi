@@ -21,6 +21,9 @@ tracing = "0.1.44"
 tracing-error = "0.2.1"
 tracing-subscriber = "0.3.23"
 anyhow = "1.0.102"
+clap-verbosity-flag = { version = "3.0.4", default-features = false, features = [
+  "tracing",
+] }
 
 [build-dependencies]
 vergen-gix = { version = "9.1.0", features = ["build", "cargo"] }
@@ -28,6 +31,7 @@ anyhow = "1.0.102"
 
 # Read the optimization guideline for more details: https://ratatui.rs/recipes/apps/release-your-app/#optimizations
 [profile.release]
+# debug = 1
 codegen-units = 1
 lto = true
 opt-level = "s"
