@@ -60,7 +60,9 @@ impl App {
             StyleSet::default()
         };
         let station_selector = StationSelector::default().styles(styles.clone());
+        let station = config.station.unwrap_or_default().station();
         App {
+            station,
             styles,
             station_selector,
             ..Default::default()
@@ -107,7 +109,7 @@ impl App {
     /// Run the application's main loop.
     pub async fn run(mut self, mut terminal: DefaultTerminal) -> Result<()> {
         // Get the station list, pick the configured station, start looking up its url.
-        self.change_station(self.station_selector.station());
+        self.change_station(self.station);
         // Create the player and send it an initial config.
         let player = Player::new(
             self.state_tx.clone(),

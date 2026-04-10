@@ -65,6 +65,19 @@ export PKG_CONFIG_PATH="/opt/homebrew/lib/pkgconfig:$PKG_CONFIG_PATH"
 cargo install classfi
 ```
 
+## Themes
+
+classfi supports color themes, using [Terminal Color Architecture](https://github.com/carmiac/tca-themes). It has about a dozen themes built-in, and will use your TCA default if configured. To install a few hundred more themes:
+
+```bash
+cargo install tca-cli
+tca init --all
+tca list # See all the installed themes
+tca set default "Tokyo Night Dark" # Or whichever you prefer
+```
+
+Full instructions for tca-cli on [crates.io](https://crates.io/crates/tca-cli).
+
 ### Roadmap
 
 - [ ] more/better installer options

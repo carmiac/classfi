@@ -7,6 +7,8 @@ license = "GPL-3.0-or-later"
 edition = "2024"
 repository = "https://github.com/carmiac/classfi"
 homepage = "https://github.com/carmiac/classfi"
+keywords = ["tui", "music", "radio", "ratatui", "mpv"]
+categories = ["command-line-utilities", "multimedia::audio"]
 
 [dependencies]
 crossterm = { version = "0.28.1", features = ["event-stream"] }
