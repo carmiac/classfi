@@ -57,11 +57,26 @@ Or from [mpv.io](https://mpv.io/installation/)
 After that, you can download it from the release page or build it yourself with
 
 ```bash
-echo "C_INCLUDE_PATH=/opt/homebrew/include:$C_INCLUDE_PATH" # Only on MacOS
-echo "LIBRARY_PATH=/opt/homebrew/lib:$LIBRARY_PATH" # Only on MacOS
-echo "PKG_CONFIG_PATH=/opt/homebrew/lib/pkgconfig:$PKG_CONFIG_PATH" # Only on MacOS
+# macOS only: set library paths so the build can find mpv
+export C_INCLUDE_PATH="/opt/homebrew/include:$C_INCLUDE_PATH"
+export LIBRARY_PATH="/opt/homebrew/lib:$LIBRARY_PATH"
+export PKG_CONFIG_PATH="/opt/homebrew/lib/pkgconfig:$PKG_CONFIG_PATH"
+
 cargo install classfi
 ```
+
+## Themes
+
+classfi supports color themes, using [Terminal Color Architecture](https://github.com/carmiac/tca-themes). It has about a dozen themes built-in, and will use your TCA default if configured. To install a few hundred more themes:
+
+```bash
+cargo install tca-cli
+tca init --all
+tca list # See all the installed themes
+tca set default "Tokyo Night Dark" # Or whichever you prefer
+```
+
+Full instructions for tca-cli on [crates.io](https://crates.io/crates/tca-cli).
 
 ### Roadmap
 
