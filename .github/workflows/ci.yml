@@ -80,6 +80,7 @@ jobs:
       - name: Install libmpv (Mac)
         if: runner.os == 'MacOS'
         run: brew install mpv
+          export PKG_CONFIG_PATH="/opt/homebrew/lib/pkgconfig:$PKG_CONFIG_PATH"
       - name: cargo generate-lockfile
         if: hashFiles('Cargo.lock') == ''
         run: cargo generate-lockfile
