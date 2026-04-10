@@ -1,16 +1,73 @@
 # Classfi - A Simple Classical Music Player
 
-Heavily inspired by [lowfi](https://github.com/talwat/lowfi), but for classical music from [Classical California](https://www.classicalcalifornia.org/) streams.
+Listen to classical music in your terminal with (almost) no fuss. Heavily inspired by [lowfi](https://github.com/talwat/lowfi), but for classical music from [Classical California](https://www.classicalcalifornia.org/) streams.
+
+## Use
+
+```bash
+classfi
+```
+
+Yup, thats it.
+
+Oh, more? Ok then.
+
+CLI Options:
+
+```bash
+$ classfi --help
+Classical music in your terminal.
+
+Usage: classfi [OPTIONS]
+
+Options:
+  -s, --station <STATION>  Initial Station [possible values: classical-california, ultimate, great-escape, nuestra-musica-en, nuestra-musica-es, arcade, americana, christmas, glissando]
+  -t, --theme <THEME>      Color Theme Name
+  -v, --verbose...         Increase logging verbosity
+  -q, --quiet...           Decrease logging verbosity
+  -h, --help               Print help
+  -V, --version            Print version
+
+```
+
+Player Commands:
+
+```
+(p)lay/pause
+(+/-) volume adjust
+(s)tation selector
+(q)uit
+```
+
+![Player Screenshot](player.png) ![Station Selector Screenshot](station_select.png)
+
+## Install / Prereqs
+
+Ah, the fuss. In order to install, you need to first install libmpv. That probably looks something like:
+
+```bash
+sudo apt install libmpv # Debian and friends
+sudo dnf install mpv-libs # Fedora and friends
+brew install mpv # MacOS
+```
+
+Or from [mpv.io](https://mpv.io/installation/)
+
+After that, you can download it from TBD or build it yourself with
+
+```bash
+cargo install classfi
+```
 
 ## TODO
 
 ### 0.1.0 Release
 
-- [ ] Write some documentation
 - [ ] CI testing
-- [ ] CI release binary
+- [ ] CI release binary for Linux and Mac
+  - cargo dist init
 
-### Future
+### Roadmap
 
 - [ ] cache station URLs to disk
 - [ ] Stream info (file type, bitrate, etc)
@@ -26,12 +83,6 @@ Heavily inspired by [lowfi](https://github.com/talwat/lowfi), but for classical 
 - [ ] one line UI
 - [ ] Create alternate versions with different sources
   - https://docs.rs/clap/latest/clap/_cookbook/multicall_busybox/index.html
-
-## References
-
-[jellyfin-tui](https://github.com/austinwilcox/jellyfin-tui/tree/main/src/player/mpv.rs)
-
-[mpv.io](https://mpv.io/manual/master)
 
 ## License
 

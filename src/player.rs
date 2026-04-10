@@ -26,7 +26,8 @@ pub struct PlayerState {
 pub enum ConnectionState {
     #[default]
     Disconnected,
-    // Connecting,
+    UrlLookupFailure,
+    // TODO: Connecting, once the is better defined
     Buffering,
     Playing,
     Paused,
@@ -35,8 +36,6 @@ pub enum ConnectionState {
 #[derive(Debug, Clone)]
 pub enum PlayerCommand {
     SetStation(Url),
-    // Play,
-    // Pause,
     Toggle,
     SetVolume(i64),
     VolumeUp,
@@ -214,10 +213,10 @@ impl Player {
                 let connection = self.state.connection_state;
                 let pause = match connection {
                     ConnectionState::Disconnected => false,
-                    // ConnectionState::Connecting => true,
                     ConnectionState::Buffering => true,
                     ConnectionState::Playing => true,
                     ConnectionState::Paused => false,
+                    ConnectionState::UrlLookupFailure => false,
                 };
                 self.mpv.set_property("pause", pause).map_err(mpv_err)
             }

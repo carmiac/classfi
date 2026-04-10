@@ -13,7 +13,7 @@ pub fn dir_strategy() -> etcetera::app_strategy::Xdg {
         author: "carmiac".to_string(),
         app_name: env!("CARGO_PKG_NAME").to_string(),
     })
-    .unwrap()
+    .expect("Couldn't determine XDG dirs.")
 }
 
 // Setup logging
@@ -41,6 +41,7 @@ pub fn log_init(verbosity: &Verbosity) -> Result<()> {
 #[command(author, version = version(), about)]
 pub struct AppConfig {
     /// Initial Station
+    #[arg(short, long)]
     pub station: Option<crate::stations::ClassicalStations>,
     /// Color Theme Name
     #[arg(short, long)]

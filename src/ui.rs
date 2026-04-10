@@ -19,12 +19,12 @@ impl Widget for &App {
     /// Renders the user interface widgets.
     fn render(self, area: Rect, buf: &mut Buffer) {
         // Create the main frame (block) for the screen border./
-        let title = Line::from("ClassFi")
+        let title = Line::from(" ClassFi ")
             .centered()
-            .style(self.styles.border.bold());
+            .style(self.styles.secondary);
         let controls = Line::from(" (p)lay/pause (s)tation (+/-) volume (q)uit ")
             .centered()
-            .style(self.styles.border);
+            .style(self.styles.secondary);
         let block = Block::bordered()
             .title(title)
             .title_alignment(Alignment::Center)
@@ -47,9 +47,6 @@ impl Widget for &App {
             crate::player::ConnectionState::Disconnected => {
                 Line::from("Disconnected").style(self.styles.error)
             }
-            // crate::player::ConnectionState::Connecting => {
-            //     Line::from("Connecting...").style(self.styles.info)
-            // }
             crate::player::ConnectionState::Buffering => {
                 Line::from(format!("Buffering... {}%", self.player_state.cache))
                     .style(self.styles.warning)
@@ -69,6 +66,9 @@ impl Widget for &App {
                 ])
             }
             crate::player::ConnectionState::Paused => Line::from("Paused").style(self.styles.info),
+            crate::player::ConnectionState::UrlLookupFailure => {
+                Line::from("Station Lookup Failed!").style(self.styles.error)
+            }
         };
 
         let text = vec![station, now_playing, player_state];
@@ -173,7 +173,7 @@ static STATION_COL_WIDTHS: LazyLock<(u16, u16)> = LazyLock::new(|| {
 
 impl Widget for &StationSelector {
     fn render(self, area: Rect, buf: &mut Buffer) {
-        let (name_width, desc_width) = *STATION_COL_WIDTHS;
+        let (name_width, _desc_width) = *STATION_COL_WIDTHS;
         let rows: Vec<Row> = ClassicalStations::value_variants()
             .iter()
             .map(|s| {
@@ -184,10 +184,7 @@ impl Widget for &StationSelector {
             })
             .collect();
 
-        let widths = [
-            Constraint::Min(name_width + 2),
-            Constraint::Min(desc_width + 2),
-        ];
+        let widths = [Constraint::Min(name_width), Constraint::Fill(100)];
 
         let block = Block::bordered().title("Select a new station, Esc to cancel");
         let block = if let Some(style) = &self.styles {

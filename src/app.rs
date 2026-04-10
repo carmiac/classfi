@@ -42,7 +42,7 @@ impl Default for App {
             state_tx,
             state_rx,
             cmd_tx,
-            cmd_rx: Some(cmd_rx),
+            cmd_rx: Some(cmd_rx), // Option so it can be moved later.
             station_selector: StationSelector::default(),
             styles: StyleSet::default(),
             player_state: PlayerState::default(),
@@ -68,7 +68,7 @@ impl App {
     }
 
     /// Get the stream URL if available and cache it.
-    pub fn get_url(&self, station: Station) {
+    fn get_url(&self, station: Station) {
         // Spawn a thread to et it from Radio Browser
         info!("Getting URL for {}", station.name);
         let sender = self.event_handler.sender.clone();
@@ -123,7 +123,6 @@ impl App {
             tokio::select! {
                 maybe_event = self.event_handler.next() => {
                     match maybe_event? {
-                        Event::Tick => self.tick(),
                         Event::Crossterm(event) => match event {
                             crossterm::event::Event::Key(key_event)
                                 if key_event.kind == crossterm::event::KeyEventKind::Press =>
@@ -185,9 +184,6 @@ impl App {
         Ok(())
     }
 
-    /// Handles the tick event of the terminal.
-    pub fn tick(&self) {}
-
     /// Set running to false to quit the application.
     pub fn quit(&mut self) {
         self.running = false;
@@ -204,6 +200,7 @@ impl App {
             }
             AppEvent::StationUrlFailed(station) => {
                 info!("Failed url lookup for {:?}", station);
+                self.player_state.connection_state = crate::player::ConnectionState::UrlLookupFailure; 
             }
         }
     }
@@ -249,7 +246,7 @@ mod tests {
     #[tokio::test]
     async fn new_station_url_for_other_station_caches_but_no_command() {
         let mut app = App::default();
-        let other = ClassicalStations::Ulitmate.station();
+        let other = ClassicalStations::Ultimate.station();
         assert_ne!(app.station, other);
         let url = test_url();
 
@@ -266,7 +263,7 @@ mod tests {
     #[tokio::test]
     async fn change_station_sends_command_on_cache_hit() {
         let mut app = App::default();
-        let station = ClassicalStations::Ulitmate.station();
+        let station = ClassicalStations::Ultimate.station();
         let url = test_url();
         app.station_urls.insert(station, url.clone());
 
@@ -284,7 +281,7 @@ mod tests {
     #[tokio::test]
     async fn change_station_no_command_on_cache_miss() {
         let mut app = App::default();
-        let station = ClassicalStations::Ulitmate.station();
+        let station = ClassicalStations::Ultimate.station();
 
         app.change_station(station);
 

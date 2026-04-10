@@ -2,7 +2,9 @@
 use clap::ValueEnum;
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Station {
+    /// Display name for the station
     pub name: &'static str,
+    /// RadioBrowser search name
     pub search: &'static str,
     pub description: &'static str,
 }
@@ -13,7 +15,7 @@ pub enum ClassicalStations {
     #[value(alias = "cc")]
     ClassicalCalifornia,
     #[value(alias = "ul")]
-    Ulitmate,
+    Ultimate,
     #[value(alias = "ge")]
     GreatEscape,
     #[value(alias = "nm-en")]
@@ -38,7 +40,7 @@ impl ClassicalStations {
                 search: "Classical KUSC",
                 description: "Live Streaming 24/7 Classical Music",
             },
-            Self::Ulitmate => Station {
+            Self::Ultimate => Station {
                 name: "Ultimate Playlist",
                 search: "KDFC Classical California Ultimate Playlist",
                 description: "Listener-voted favorites",
