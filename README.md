@@ -46,43 +46,34 @@ Player Commands:
 Ah, the fuss. In order to install, you need to first install libmpv. That probably looks something like:
 
 ```bash
-sudo apt install libmpv # Debian and friends
+sudo apt install libmpv   # Debian and friends
 sudo dnf install mpv-libs # Fedora and friends
-brew install mpv # MacOS
+sudo pacman -S mpv        # Arch and friends
+brew install mpv          # MacOS
 ```
 
 Or from [mpv.io](https://mpv.io/installation/)
 
-After that, you can download it from TBD or build it yourself with
+After that, you can download it from the release page or build it yourself with
 
 ```bash
+echo "C_INCLUDE_PATH=/opt/homebrew/include:$C_INCLUDE_PATH" # Only on MacOS
+echo "LIBRARY_PATH=/opt/homebrew/lib:$LIBRARY_PATH" # Only on MacOS
+echo "PKG_CONFIG_PATH=/opt/homebrew/lib/pkgconfig:$PKG_CONFIG_PATH" # Only on MacOS
 cargo install classfi
 ```
 
-## TODO
-
-### 0.1.0 Release
-
-- [ ] Mac testing
-- [ ] CI release binary for Linux and Mac
-  - cargo dist init
-
 ### Roadmap
 
+- [ ] more/better installer options
+  - [ ] brew
+  - [ ] cargo binstall
 - [ ] cache station URLs to disk
 - [ ] Stream info (file type, bitrate, etc)
 - [ ] better player state reporting/tracking
-  - [ ] test via flakey connection tools
-  - [ ] look at ignored messages from mpv
-    - Getting URL -> finding stream
-    - Got URL -> found stream
-    - StartFile -> Connecting
-    - FileLoaded -> Connected
-    - PlaybackRestart -> Playing
-- [ ] add media key handling
+- [ ] media key handling
 - [ ] one line UI
-- [ ] Create alternate versions with different sources
-  - https://docs.rs/clap/latest/clap/_cookbook/multicall_busybox/index.html
+- [ ] alternate versions with different sources
 
 ## License
 
