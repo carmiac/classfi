@@ -10,7 +10,7 @@ classfi
 
 Yup, thats it.
 
-Oh, more? Ok then.
+You want more? Ok then.
 
 CLI Options:
 
