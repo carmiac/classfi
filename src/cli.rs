@@ -2,7 +2,7 @@
 use anyhow::Result;
 use clap::Parser;
 use clap_verbosity_flag::Verbosity;
-use etcetera::{choose_app_strategy, AppStrategy, AppStrategyArgs};
+use etcetera::{AppStrategy, AppStrategyArgs, choose_app_strategy};
 use tracing_error::ErrorLayer;
 use tracing_subscriber::{fmt, prelude::*};
 

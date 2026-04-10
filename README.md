@@ -63,7 +63,7 @@ cargo install classfi
 
 ### 0.1.0 Release
 
-- [ ] CI testing
+- [ ] Mac testing
 - [ ] CI release binary for Linux and Mac
   - cargo dist init
 

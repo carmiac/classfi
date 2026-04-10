@@ -200,7 +200,8 @@ impl App {
             }
             AppEvent::StationUrlFailed(station) => {
                 info!("Failed url lookup for {:?}", station);
-                self.player_state.connection_state = crate::player::ConnectionState::UrlLookupFailure; 
+                self.player_state.connection_state =
+                    crate::player::ConnectionState::UrlLookupFailure;
             }
         }
     }
