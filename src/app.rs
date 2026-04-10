@@ -114,7 +114,7 @@ impl App {
             self.cmd_rx
                 .take()
                 .ok_or_else(|| anyhow!("Couldn't create cmd_rx"))?,
-        );
+        )?;
         let mut player_join_handle = tokio::spawn(player.run()).fuse();
         self.cmd_tx.send(PlayerCommand::SetVolume(80))?;
         // Main run loop

@@ -58,7 +58,7 @@ impl Player {
     pub fn new(
         state_tx: mpsc::UnboundedSender<PlayerState>,
         cmd_rx: mpsc::UnboundedReceiver<PlayerCommand>,
-    ) -> Self {
+    ) -> Result<Self> {
         let mpv = Mpv::with_initializer(|init| {
             init.set_property("video", "no")?;
             init.set_property("volume", 80i64)?;
@@ -68,14 +68,14 @@ impl Player {
             init.set_property("input-vo-keyboard", "no")?;
             Ok(())
         })
-        .expect("Could not create mpv. Is libmpv2 installed?");
+        .map_err(|e| anyhow::anyhow!("Could not initialize mpv (is libmpv installed?): {e}"))?;
 
-        Player {
+        Ok(Player {
             state: PlayerState::default(),
             state_tx,
             cmd_rx,
             mpv,
-        }
+        })
     }
 
     fn setup_mpv(&self) -> Result<()> {
