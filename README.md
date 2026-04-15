@@ -57,11 +57,6 @@ Or from [mpv.io](https://mpv.io/installation/)
 After that, you can download it from the release page or build it yourself with
 
 ```bash
-# macOS only: set library paths so the build can find mpv
-export C_INCLUDE_PATH="/opt/homebrew/include:$C_INCLUDE_PATH"
-export LIBRARY_PATH="/opt/homebrew/lib:$LIBRARY_PATH"
-export PKG_CONFIG_PATH="/opt/homebrew/lib/pkgconfig:$PKG_CONFIG_PATH"
-
 cargo install classfi
 ```
 

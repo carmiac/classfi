@@ -83,9 +83,6 @@ jobs:
         if: runner.os == 'macOS'
         run: |
           brew install mpv
-          echo "C_INCLUDE_PATH=/opt/homebrew/include:$C_INCLUDE_PATH" >> $GITHUB_ENV
-          echo "LIBRARY_PATH=/opt/homebrew/lib:$LIBRARY_PATH" >> $GITHUB_ENV
-          echo "PKG_CONFIG_PATH=/opt/homebrew/lib/pkgconfig:$PKG_CONFIG_PATH" >> $GITHUB_ENV
       - name: cargo generate-lockfile
         if: hashFiles('Cargo.lock') == ''
         run: cargo generate-lockfile
