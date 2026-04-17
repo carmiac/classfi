@@ -1,6 +1,6 @@
 [package]
 name = "classfi"
-version = "0.1.0"
+version = "0.1.1"
 description = "Classical music in your terminal."
 authors = ["Adam Milner <carmiac@gmail.com>"]
 license = "GPL-3.0-or-later"

@@ -57,11 +57,6 @@ Or from [mpv.io](https://mpv.io/installation/)
 After that, you can download it from the release page or build it yourself with
 
 ```bash
-# macOS only: set library paths so the build can find mpv
-export C_INCLUDE_PATH="/opt/homebrew/include:$C_INCLUDE_PATH"
-export LIBRARY_PATH="/opt/homebrew/lib:$LIBRARY_PATH"
-export PKG_CONFIG_PATH="/opt/homebrew/lib/pkgconfig:$PKG_CONFIG_PATH"
-
 cargo install classfi
 ```
 
@@ -80,12 +75,8 @@ Full instructions for tca-cli on [crates.io](https://crates.io/crates/tca-cli).
 
 ### Roadmap
 
-- [ ] more/better installer options
-  - [ ] brew
-  - [ ] cargo binstall
 - [ ] cache station URLs to disk
-- [ ] Stream info (file type, bitrate, etc)
-- [ ] better player state reporting/tracking
+- [ ] better player state reporting/tracking/handling
 - [ ] media key handling
 - [ ] one line UI
 - [ ] alternate versions with different sources
