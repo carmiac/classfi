@@ -75,12 +75,8 @@ Full instructions for tca-cli on [crates.io](https://crates.io/crates/tca-cli).
 
 ### Roadmap
 
-- [ ] more/better installer options
-  - [ ] brew
-  - [ ] cargo binstall
 - [ ] cache station URLs to disk
-- [ ] Stream info (file type, bitrate, etc)
-- [ ] better player state reporting/tracking
+- [ ] better player state reporting/tracking/handling
 - [ ] media key handling
 - [ ] one line UI
 - [ ] alternate versions with different sources

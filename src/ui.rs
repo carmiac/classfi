@@ -19,12 +19,10 @@ impl Widget for &App {
     /// Renders the user interface widgets.
     fn render(self, area: Rect, buf: &mut Buffer) {
         // Create the main frame (block) for the screen border./
-        let title = Line::from(" ClassFi ")
-            .centered()
-            .style(self.styles.secondary);
+        let title = Line::from(" ClassFi ").centered().style(self.styles.info);
         let controls = Line::from(" (p)lay/pause (s)tation (+/-) volume (q)uit ")
             .centered()
-            .style(self.styles.secondary);
+            .style(self.styles.info);
         let block = Block::bordered()
             .title(title)
             .title_alignment(Alignment::Center)
