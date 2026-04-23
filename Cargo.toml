@@ -14,7 +14,7 @@ categories = ["command-line-utilities", "multimedia::audio"]
 crossterm = { version = "0.28.1", features = ["event-stream"] }
 futures = "0.3.31"
 ratatui = "0.30.0"
-tokio = { version = "1.40.0", features = ["full"] }
+tokio = { version = "1.52.1", features = ["full"] }
 tca-ratatui = "0.7.0"
 url = "2.5.8"
 radiobrowser = "0.6.1"
