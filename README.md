@@ -75,11 +75,7 @@ Full instructions for tca-cli on [crates.io](https://crates.io/crates/tca-cli).
 
 ### Roadmap
 
-- [ ] cache station URLs to disk
-- [ ] better player state reporting/tracking/handling
-- [ ] media key handling
-- [ ] one line UI
-- [ ] alternate versions with different sources
+- [ ] alternate versions with different sources a la busybox
 
 ## License
 
