@@ -46,6 +46,12 @@ pub struct AppConfig {
     /// Color Theme Name
     #[arg(short, long)]
     pub theme: Option<String>,
+    /// Compact single-line display
+    #[arg(long)]
+    pub compact: bool,
+    /// Clear the station URL cache and exit
+    #[arg(long)]
+    pub clear_cache: bool,
     // Debug level
     #[command(flatten)]
     pub verbosity: Verbosity,

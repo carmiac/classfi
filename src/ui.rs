@@ -18,6 +18,41 @@ use tca_ratatui::StyleSet;
 impl Widget for &App {
     /// Renders the user interface widgets.
     fn render(self, area: Rect, buf: &mut Buffer) {
+        if self.compact {
+            self.render_compact(area, buf);
+        } else {
+            self.render_full(area, buf);
+        }
+    }
+}
+
+impl App {
+    fn render_compact(&self, area: Rect, buf: &mut Buffer) {
+        use crate::player::ConnectionState;
+        let state_str = match self.player_state.connection_state {
+            ConnectionState::Disconnected => "Disconnected".to_string(),
+            ConnectionState::Connecting => "Connecting...".to_string(),
+            ConnectionState::Buffering => format!("Buffering {}%", self.player_state.cache),
+            ConnectionState::Playing => "Playing".to_string(),
+            ConnectionState::Paused => "Paused".to_string(),
+            ConnectionState::UrlLookupFailure => "Lookup Failed".to_string(),
+            ConnectionState::StreamLost => "Stream Lost".to_string(),
+        };
+        let line = Line::from(vec![
+            Span::styled(format!("[{}] ", self.station.name), self.styles.info),
+            Span::styled(
+                format!("Now Playing: {} ", self.player_state.title),
+                self.styles.primary,
+            ),
+            Span::styled(
+                format!("| Vol: {}% | {}", self.player_state.volume, state_str),
+                self.styles.secondary,
+            ),
+        ]);
+        Paragraph::new(line).render(area, buf);
+    }
+
+    fn render_full(&self, area: Rect, buf: &mut Buffer) {
         // Create the main frame (block) for the screen border./
         let title = Line::from(" ClassFi ").centered().style(self.styles.info);
         let controls = Line::from(" (p)lay/pause (s)tation (+/-) volume (q)uit ")
@@ -45,6 +80,9 @@ impl Widget for &App {
             crate::player::ConnectionState::Disconnected => {
                 Line::from("Disconnected").style(self.styles.error)
             }
+            crate::player::ConnectionState::Connecting => {
+                Line::from("Connecting...").style(self.styles.warning)
+            }
             crate::player::ConnectionState::Buffering => {
                 Line::from(format!("Buffering... {}%", self.player_state.cache))
                     .style(self.styles.warning)
@@ -66,6 +104,9 @@ impl Widget for &App {
             crate::player::ConnectionState::Paused => Line::from("Paused").style(self.styles.info),
             crate::player::ConnectionState::UrlLookupFailure => {
                 Line::from("Station Lookup Failed!").style(self.styles.error)
+            }
+            crate::player::ConnectionState::StreamLost => {
+                Line::from("Stream lost. Try switching stations.").style(self.styles.error)
             }
         };
 

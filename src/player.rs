@@ -3,6 +3,7 @@ use anyhow::{Error, Result, anyhow};
 use libmpv2::{
     Format, Mpv,
     events::{Event, PropertyData},
+    mpv_end_file_reason,
 };
 use tokio::sync::mpsc;
 use tokio::time::{Duration, Instant};
@@ -27,10 +28,12 @@ pub enum ConnectionState {
     #[default]
     Disconnected,
     UrlLookupFailure,
+    Connecting,
     // TODO: Connecting, once the is better defined
     Buffering,
     Playing,
     Paused,
+    StreamLost,
 }
 
 #[derive(Debug, Clone)]
@@ -128,8 +131,24 @@ impl Player {
                         }
                     },
                     _ = timeout_interval.tick() => {
-                        // Mvp timed out, must have crashed or something.
-                        return Err(anyhow!("Mvp timeout."));
+                        match self.state.connection_state {
+                            ConnectionState::Buffering => {
+                                // Buffer stalled — treat as stream loss and let the app retry.
+                                info!("Buffer stalled, transitioning to StreamLost");
+                                self.state.connection_state = ConnectionState::StreamLost;
+                                let _ = self.state_tx.send(self.state.clone());
+                                timeout_interval.reset();
+                            }
+                            // Only fatal-crash on timeout when mpv should be actively streaming.
+                            ConnectionState::Playing
+                            | ConnectionState::Connecting => {
+                                return Err(anyhow!("Mpv timeout."));
+                            }
+                            // Paused/idle states emit no events; just reset the watchdog.
+                            _ => {
+                                timeout_interval.reset();
+                            }
+                        }
                     }
             }
         }
@@ -144,6 +163,21 @@ impl Player {
                 Err(err) => {
                     error!("Event error {}", err);
                     return Err(mpv_err(err));
+                }
+                Ok(Event::StartFile) => {
+                    info!("mpv: StartFile → Connecting");
+                    self.state.connection_state = ConnectionState::Connecting;
+                }
+                Ok(Event::EndFile(reason)) => {
+                    info!("mpv: EndFile reason={}", reason);
+                    match reason {
+                        mpv_end_file_reason::Eof | mpv_end_file_reason::Error => {
+                            info!("mpv: EndFile(Eof/Error) → StreamLost");
+                            self.state.connection_state = ConnectionState::StreamLost;
+                        }
+                        // Stop/Quit are intentional; Redirect is handled internally by mpv.
+                        _ => {}
+                    }
                 }
                 Ok(Event::PropertyChange {
                     name: "time-pos",
@@ -173,10 +207,24 @@ impl Player {
                     change: PropertyData::Flag(value),
                     ..
                 }) => {
-                    if value {
-                        self.state.connection_state = ConnectionState::Paused
-                    } else {
-                        self.state.connection_state = ConnectionState::Playing
+                    // Don't override terminal/disconnected states from pause events —
+                    // mpv may emit pause:false after EndFile, which would incorrectly
+                    // resurrect a dead stream as Playing.
+                    match self.state.connection_state {
+                        ConnectionState::Disconnected
+                        | ConnectionState::StreamLost
+                        | ConnectionState::UrlLookupFailure => {
+                            info!("mpv: pause:{} ignored in state {:?}", value, self.state.connection_state);
+                        }
+                        _ => {
+                            if value {
+                                info!("mpv: pause:true → Paused");
+                                self.state.connection_state = ConnectionState::Paused
+                            } else {
+                                info!("mpv: pause:false → Playing");
+                                self.state.connection_state = ConnectionState::Playing
+                            }
+                        }
                     }
                 }
                 Ok(Event::PropertyChange {
@@ -184,8 +232,16 @@ impl Player {
                     change: PropertyData::Flag(value),
                     ..
                 }) => {
+                    info!("mpv: paused-for-cache:{} (state={:?})", value, self.state.connection_state);
                     if value {
                         self.state.connection_state = ConnectionState::Buffering
+                    } else if matches!(
+                        self.state.connection_state,
+                        ConnectionState::Buffering | ConnectionState::Connecting
+                    ) {
+                        // Buffer filled and playback resuming.
+                        info!("mpv: paused-for-cache:false → Playing");
+                        self.state.connection_state = ConnectionState::Playing
                     }
                 }
 
@@ -203,6 +259,7 @@ impl Player {
         debug!("Player Command: {:?}", cmd);
         match cmd {
             PlayerCommand::SetStation(url) => {
+                self.state.connection_state = ConnectionState::Connecting;
                 self.mpv
                     .command("loadfile", &[url.as_str(), "replace"])
                     .map_err(mpv_err)?;
@@ -213,10 +270,12 @@ impl Player {
                 let connection = self.state.connection_state;
                 let pause = match connection {
                     ConnectionState::Disconnected => false,
+                    ConnectionState::Connecting => false,
                     ConnectionState::Buffering => true,
                     ConnectionState::Playing => true,
                     ConnectionState::Paused => false,
                     ConnectionState::UrlLookupFailure => false,
+                    ConnectionState::StreamLost => false,
                 };
                 self.mpv.set_property("pause", pause).map_err(mpv_err)
             }
