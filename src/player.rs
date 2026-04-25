@@ -214,7 +214,10 @@ impl Player {
                         ConnectionState::Disconnected
                         | ConnectionState::StreamLost
                         | ConnectionState::UrlLookupFailure => {
-                            info!("mpv: pause:{} ignored in state {:?}", value, self.state.connection_state);
+                            info!(
+                                "mpv: pause:{} ignored in state {:?}",
+                                value, self.state.connection_state
+                            );
                         }
                         _ => {
                             if value {
@@ -232,7 +235,10 @@ impl Player {
                     change: PropertyData::Flag(value),
                     ..
                 }) => {
-                    info!("mpv: paused-for-cache:{} (state={:?})", value, self.state.connection_state);
+                    info!(
+                        "mpv: paused-for-cache:{} (state={:?})",
+                        value, self.state.connection_state
+                    );
                     if value {
                         self.state.connection_state = ConnectionState::Buffering
                     } else if matches!(
