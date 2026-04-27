@@ -3,6 +3,7 @@ use clap::Parser;
 #[macro_use]
 extern crate tracing;
 mod app;
+mod cache;
 mod cli;
 mod event;
 mod player;
@@ -16,6 +17,13 @@ use cli::{AppConfig, log_init};
 async fn main() -> Result<()> {
     let config = AppConfig::parse();
     log_init(&config.verbosity)?;
+
+    if config.clear_cache {
+        cache::clear()?;
+        println!("Station URL cache cleared.");
+        return Ok(());
+    }
+
     debug!("Setting panic hook");
     let default_hook = std::panic::take_hook();
     std::panic::set_hook(Box::new(move |info| {
