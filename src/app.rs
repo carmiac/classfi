@@ -1,9 +1,9 @@
+use crate::cache;
 use crate::cli::AppConfig;
 use crate::event::{AppEvent, Event, EventHandler};
 use crate::player::{ConnectionState, Player, PlayerCommand, PlayerState};
 use crate::stations::{ClassicalStations, Station};
 use crate::ui::StationSelector;
-use crate::{cache};
 use anyhow::{Result, anyhow};
 use souvlaki::{MediaControlEvent, MediaControls, MediaMetadata, MediaPlayback, PlatformConfig};
 use std::collections::HashMap;
@@ -25,7 +25,6 @@ fn update_media_controls(
     let Some(c) = controls else { return };
     let playback = match state.connection_state {
         ConnectionState::Playing => MediaPlayback::Playing { progress: None },
-        ConnectionState::Paused => MediaPlayback::Paused { progress: None },
         _ => MediaPlayback::Stopped,
     };
     if let Err(e) = c.set_playback(playback) {
@@ -168,8 +167,7 @@ impl App {
         // Use a channel to bridge the Send+static souvlaki callback into our async loop.
         // Keep _media_tx_guard alive so media_rx.recv() blocks indefinitely when
         // controls are unavailable (rather than returning None and spinning the loop).
-        let (media_tx, mut media_rx) =
-            tokio::sync::mpsc::unbounded_channel::<MediaControlEvent>();
+        let (media_tx, mut media_rx) = tokio::sync::mpsc::unbounded_channel::<MediaControlEvent>();
         let _media_tx_guard = media_tx.clone();
         let mut media_controls: Option<MediaControls> = {
             let config = PlatformConfig {
@@ -265,6 +263,8 @@ impl App {
                             let vol = (v * 100.0).clamp(0.0, 100.0) as i64;
                             self.cmd_tx.send(PlayerCommand::SetVolume(vol))?;
                             // Echo volume back so MPRIS clients see the updated value.
+                            // set_volume only exists on the Linux/BSD MPRIS backend.
+                            #[cfg(all(unix, not(any(target_os = "macos", target_os = "ios"))))]
                             if let Some(ref mut c) = media_controls {
                                 let _ = c.set_volume(v);
                             }

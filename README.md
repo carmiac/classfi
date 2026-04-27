@@ -73,6 +73,10 @@ tca set default "Tokyo Night Dark" # Or whichever you prefer
 
 Full instructions for tca-cli on [crates.io](https://crates.io/crates/tca-cli).
 
+## Known Issues
+
+- MacOS media keys: Play/pause and other media keys are not currently supported on macOS, and considering the motherships disdain for the terminal they probably never will be.
+
 ### Roadmap
 
 - [ ] alternate versions with different sources a la busybox
