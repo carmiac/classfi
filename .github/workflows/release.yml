@@ -26,7 +26,7 @@ jobs:
             target: x86_64-unknown-linux-gnu
             artifact: classfi-x86_64-unknown-linux-gnu.tar.gz
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
