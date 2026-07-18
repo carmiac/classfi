@@ -3,7 +3,7 @@ name: Release
 on:
   push:
     tags:
-      - 'v[0-9]+.[0-9]+.[0-9]+'
+      - "v[0-9]+.[0-9]+.[0-9]+"
 
 env:
   CARGO_TERM_COLOR: always
@@ -22,9 +22,15 @@ jobs:
           - os: macos-latest
             target: aarch64-apple-darwin
             artifact: classfi-aarch64-apple-darwin.tar.gz
+          - os: macos-13
+            target: x86_64-apple-darwin
+            artifact: classfi-x86_64-apple-darwin.tar.gz
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
             artifact: classfi-x86_64-unknown-linux-gnu.tar.gz
+          - os: ubuntu-24.04-arm
+            target: aarch64-unknown-linux-gnu
+            artifact: classfi-aarch64-unknown-linux-gnu.tar.gz
     steps:
       - uses: actions/checkout@v6
 
@@ -40,36 +46,61 @@ jobs:
 
       - name: Install libmpv (Linux)
         if: runner.os == 'Linux'
-        run: sudo apt-get install -y libmpv-dev
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libmpv-dev
 
       - name: Install libmpv (macOS)
         if: runner.os == 'macOS'
         run: |
           brew install mpv
-          echo "C_INCLUDE_PATH=/opt/homebrew/include:$C_INCLUDE_PATH" >> $GITHUB_ENV
-          echo "LIBRARY_PATH=/opt/homebrew/lib:$LIBRARY_PATH" >> $GITHUB_ENV
-          echo "PKG_CONFIG_PATH=/opt/homebrew/lib/pkgconfig:$PKG_CONFIG_PATH" >> $GITHUB_ENV
+          BREW_PREFIX="$(brew --prefix)"
+          echo "C_INCLUDE_PATH=$BREW_PREFIX/include:$C_INCLUDE_PATH" >> $GITHUB_ENV
+          echo "LIBRARY_PATH=$BREW_PREFIX/lib:$LIBRARY_PATH" >> $GITHUB_ENV
+          echo "PKG_CONFIG_PATH=$BREW_PREFIX/lib/pkgconfig:$PKG_CONFIG_PATH" >> $GITHUB_ENV
 
       - name: Build release binary
         run: cargo build --release --locked --target ${{ matrix.target }}
+
+      - name: Smoke test binary
+        run: ./target/${{ matrix.target }}/release/classfi --version
 
       - name: Package binary
         run: |
           cd target/${{ matrix.target }}/release
           tar -czf ../../../${{ matrix.artifact }} classfi
           cd -
+          shasum -a 256 ${{ matrix.artifact }} > ${{ matrix.artifact }}.sha256
 
       - name: Upload release artifact
         uses: softprops/action-gh-release@v3
         with:
-          files: ${{ matrix.artifact }}
+          files: |
+            ${{ matrix.artifact }}
+            ${{ matrix.artifact }}.sha256
           body: |
             ## Installation
+
+            Each tarball ships with a matching `.sha256` file. To verify a
+            download before installing:
+            ```sh
+            curl -LO https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/<artifact>.sha256
+            shasum -a 256 -c <artifact>.sha256
+            ```
 
             ### macOS (Apple Silicon)
             ```sh
             brew install mpv
             curl -Lo classfi.tar.gz https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/classfi-aarch64-apple-darwin.tar.gz
+            tar -xzf classfi.tar.gz
+            chmod +x classfi
+            sudo mv classfi /usr/local/bin/
+            ```
+
+            ### macOS (Intel)
+            ```sh
+            brew install mpv
+            curl -Lo classfi.tar.gz https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/classfi-x86_64-apple-darwin.tar.gz
             tar -xzf classfi.tar.gz
             chmod +x classfi
             sudo mv classfi /usr/local/bin/
@@ -83,6 +114,19 @@ jobs:
             sudo pacman -S mpv          # Arch
 
             curl -Lo classfi.tar.gz https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/classfi-x86_64-unknown-linux-gnu.tar.gz
+            tar -xzf classfi.tar.gz
+            chmod +x classfi
+            sudo mv classfi /usr/local/bin/
+            ```
+
+            ### Linux (ARM64 / aarch64)
+            ```sh
+            # Install mpv via your distro's package manager, e.g.:
+            sudo apt install mpv        # Debian/Ubuntu
+            sudo dnf install mpv        # Fedora
+            sudo pacman -S mpv          # Arch
+
+            curl -Lo classfi.tar.gz https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/classfi-aarch64-unknown-linux-gnu.tar.gz
             tar -xzf classfi.tar.gz
             chmod +x classfi
             sudo mv classfi /usr/local/bin/
