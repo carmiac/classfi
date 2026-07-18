@@ -1,4 +1,4 @@
-use anyhow::{Result, anyhow};
+use anyhow::{anyhow, Result};
 use crossterm::event::Event as CrosstermEvent;
 use futures::{FutureExt, StreamExt};
 use tokio::sync::mpsc;
@@ -84,7 +84,7 @@ struct EventTask {
 }
 
 impl EventTask {
-    /// Constructs a new instance of [`EventThread`].
+    /// Constructs a new instance of `EventTask`.
     fn new(sender: mpsc::UnboundedSender<Event>) -> Self {
         Self { sender }
     }

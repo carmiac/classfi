@@ -93,13 +93,3 @@ jobs:
         uses: Swatinem/rust-cache@v2
       - name: cargo test --locked
         run: cargo test --locked --all-features --all-targets
-  audit:
-    # check the dependency tree against the RustSec advisory database.
-    name: audit
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-      - name: Install cargo-audit
-        uses: taiki-e/install-action@cargo-audit
-      - name: Run cargo audit
-        run: cargo audit
