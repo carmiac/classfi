@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 use crossterm::event::Event as CrosstermEvent;
 use futures::{FutureExt, StreamExt};
 use tokio::sync::mpsc;
