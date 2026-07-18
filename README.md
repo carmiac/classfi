@@ -60,6 +60,15 @@ After that, you can download it from the release page or build it yourself with
 cargo install classfi
 ```
 
+### Nix
+
+On NixOS (or any system with Nix and flakes enabled) you don't need to install libmpv separately, the flake handles it.
+
+```bash
+nix run github:carmiac/classfi              # run without installing
+nix profile install github:carmiac/classfi  # install into your profile
+```
+
 ## Themes
 
 classfi supports color themes, using [Terminal Color Architecture](https://github.com/carmiac/tca-themes). It has about a dozen themes built-in, and will use your TCA default if configured. To install a few hundred more themes:
