@@ -50,21 +50,18 @@ jobs:
       - name: Run clippy action
         uses: clechasseur/rs-clippy-check@v5
   doc:
-    # run docs generation on nightly rather than stable. This enables features like
-    # https://doc.rust-lang.org/beta/unstable-book/language-features/doc-cfg.html which allows an
-    # API be documented as only available in some specific platforms.
     name: doc
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - name: Install Rust nightly
-        uses: dtolnay/rust-toolchain@nightly
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
       - name: Cache Cargo dependencies
         uses: Swatinem/rust-cache@v2
       - name: Run cargo doc
         run: cargo doc --no-deps --all-features
         env:
-          RUSTDOCFLAGS: --cfg docsrs
+          RUSTDOCFLAGS: -D warnings
   test:
     runs-on: ${{ matrix.os }}
     name: test ${{ matrix.os }}
@@ -78,11 +75,17 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
       - name: Install libmpv (Linux)
         if: runner.os == 'Linux'
-        run: sudo apt-get install -y libmpv-dev
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libmpv-dev
       - name: Install libmpv (Mac)
         if: runner.os == 'macOS'
         run: |
           brew install mpv
+          BREW_PREFIX="$(brew --prefix)"
+          echo "C_INCLUDE_PATH=$BREW_PREFIX/include:$C_INCLUDE_PATH" >> $GITHUB_ENV
+          echo "LIBRARY_PATH=$BREW_PREFIX/lib:$LIBRARY_PATH" >> $GITHUB_ENV
+          echo "PKG_CONFIG_PATH=$BREW_PREFIX/lib/pkgconfig:$PKG_CONFIG_PATH" >> $GITHUB_ENV
       - name: cargo generate-lockfile
         if: hashFiles('Cargo.lock') == ''
         run: cargo generate-lockfile

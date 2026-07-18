@@ -57,14 +57,7 @@ pub struct AppConfig {
     pub verbosity: Verbosity,
 }
 
-const VERSION_MESSAGE: &str = concat!(
-    env!("CARGO_PKG_VERSION"),
-    "-",
-    env!("VERGEN_GIT_DESCRIBE"),
-    " (",
-    env!("VERGEN_BUILD_DATE"),
-    ")"
-);
+const VERSION_MESSAGE: &str = env!("CARGO_PKG_VERSION");
 
 pub fn version() -> String {
     let author = clap::crate_authors!();
